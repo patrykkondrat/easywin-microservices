@@ -7,25 +7,38 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class WalletService {
     private final WalletRepository walletRepository;
 
-    public Optional<Wallet> getBalanceById(WalletRequest walletRequest) {
-        return walletRepository.findById(walletRequest.getId());
+    public Wallet createWallet() {
+        Wallet wallet = new Wallet();
+        wallet.set_id(UUID.randomUUID().toString());
+        wallet.setBalance(0.00);
+        walletRepository.save(wallet);
+        return wallet;
     }
 
-    public void changeBalance(WalletRequest walletRequest, double value) {
-        Wallet wallet = (Wallet) walletRepository.findById(walletRequest.getId()).stream().map(this::mapToWallet);
+    public Optional<Wallet> getBalanceById(WalletRequest walletRequest) {
+        return walletRepository.findById(walletRequest.get_id());
+    }
+
+    public String changeBalance(WalletRequest walletRequest, double value) {
+        Wallet wallet = (Wallet) walletRepository.findById(walletRequest.get_id()).stream().map(this::mapToWallet);
+        if (wallet.getBalance() + value < 0.00) {
+            return "Can't decrease over 0.00";
+        }
         wallet.setBalance(wallet.getBalance() + value);
         walletRepository.save(wallet);
+        return "Success";
     }
 
     private Wallet mapToWallet(Wallet wallet) {
         return Wallet.builder()
-                .id(wallet.getId())
+                ._id(wallet.get_id())
                 .balance(wallet.getBalance())
                 .build();
     }

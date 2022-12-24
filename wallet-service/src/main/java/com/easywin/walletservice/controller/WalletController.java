@@ -20,18 +20,25 @@ public class WalletController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Optional<Wallet> getIdBallance(WalletRequest walletRequest) {
+    public Optional<Wallet> getIdBallance(@RequestBody WalletRequest walletRequest) {
         return walletService.getBalanceById(walletRequest);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Wallet createWallet() {
+        return walletService.createWallet();
+
     }
 
     @PostMapping("/{value}")
     @ResponseStatus(HttpStatus.OK)
-    public void increaseBalance(WalletRequest walletRequest, @PathVariable Double value) {
-        walletService.changeBalance(walletRequest, value);
+    public void increaseBalance(@RequestBody WalletRequest walletRequest, @PathVariable Double value) {
+        String out = walletService.changeBalance(walletRequest, value);
         if (value >= 0) {
-            log.info("Account " + walletRequest.getId() + " increase.");
+            log.info("Account " + walletRequest.get_id() + " increase.");
         } else {
-            log.info("Account " + walletRequest.getId() + " decrease.");
+            log.info("Account " + walletRequest.get_id() + " decrease.");
         }
     }
 }

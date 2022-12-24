@@ -1,21 +1,21 @@
 package com.easywin.walletservice.model;
 
+import com.sun.istack.NotNull;
 import lombok.*;
 
 import javax.persistence.*;
 
 @Entity
+@Table(name = "t_wallet")
 @Getter
 @Setter
 @Builder
-@Table(name = "t_wallet")
 @AllArgsConstructor
 @NoArgsConstructor
 public class Wallet {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private String _id;
+    @NotNull
     private Double balance;
-
 }
 
