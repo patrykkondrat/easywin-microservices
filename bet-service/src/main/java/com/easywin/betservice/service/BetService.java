@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +22,7 @@ public class BetService {
     // create
     public void createBet(BetRequest betRequest){
         Bet bet = Bet.builder()
+                ._id(UUID.randomUUID().toString())
                 .description(betRequest.getDescription())
                 .hostRate(betRequest.getHostRate())
                 .guestRate(betRequest.getGuestRate())

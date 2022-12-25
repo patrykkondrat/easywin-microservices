@@ -18,6 +18,7 @@
         <module>bet-service</module>
         <module>ticket-service</module>
         <module>wallet-service</module>
+        <module>chat-service</module>
     </modules>
 
     <properties>
