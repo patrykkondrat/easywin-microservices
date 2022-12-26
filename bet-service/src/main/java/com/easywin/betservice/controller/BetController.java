@@ -2,6 +2,7 @@ package com.easywin.betservice.controller;
 
 import com.easywin.betservice.dto.BetRequest;
 import com.easywin.betservice.dto.BetResponse;
+import com.easywin.betservice.dto.BetToTicketResponse;
 import com.easywin.betservice.service.BetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,5 +41,11 @@ public class BetController {
     @ResponseStatus(HttpStatus.OK)
     public void deleteBet(@PathVariable("id") String id){
         betService.deleteBet(id);
+    }
+
+    @GetMapping("/isbet")
+    @ResponseStatus(HttpStatus.OK)
+    public List<BetToTicketResponse> isBet(@RequestParam List<String> Id) {
+        return betService.isBetInBets(Id);
     }
 }

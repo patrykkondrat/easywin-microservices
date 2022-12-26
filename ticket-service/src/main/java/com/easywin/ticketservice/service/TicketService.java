@@ -1,5 +1,6 @@
 package com.easywin.ticketservice.service;
 
+import com.easywin.ticketservice.dto.BetToTicketResponse;
 import com.easywin.ticketservice.dto.TicketLineItemsDto;
 import com.easywin.ticketservice.dto.TicketRequest;
 import com.easywin.ticketservice.model.Ticket;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,12 +32,35 @@ public class TicketService {
                 .map(this::mapToDto)
                 .toList();
 
-        System.out.println(ticketLineItems);
-
-        webClient.get();
-
         ticket.setTicketLineItemsList(ticketLineItems);
-        ticketRepository.save(ticket);
+
+        List<String> betsId = ticket.getTicketLineItemsList().stream()
+                .map(TicketLineItems::getBetId)
+                .toList();
+
+        BetToTicketResponse[] responsesArray =
+                webClient.get()
+                .uri("http://localhost:8080/api/bet/isbet",
+                        uriBuilder ->
+                                uriBuilder.queryParam("betId", betsId)
+                                        .build())
+                .retrieve()
+                .bodyToMono(BetToTicketResponse[].class)
+                .block();
+
+        boolean responseArrays = Arrays.stream(responsesArray)
+                .anyMatch(betToTicketResponse ->
+                        betToTicketResponse.get_id() == null);
+
+        System.out.println(betsId);
+        System.out.println(responsesArray);
+        System.out.println(responseArrays);
+
+        if (responseArrays) {
+            ticketRepository.save(ticket);
+        } else {
+            throw new IllegalArgumentException("Bet isn't available.");
+        }
     }
 
     private TicketLineItems mapToDto(TicketLineItemsDto ticketLineItemsDto) {

@@ -2,6 +2,7 @@ package com.easywin.betservice.service;
 
 import com.easywin.betservice.dto.BetRequest;
 import com.easywin.betservice.dto.BetResponse;
+import com.easywin.betservice.dto.BetToTicketResponse;
 import com.easywin.betservice.model.Bet;
 import com.easywin.betservice.repository.BetRepository;
 import lombok.RequiredArgsConstructor;
@@ -62,5 +63,21 @@ public class BetService {
                 .date(bet.getDate())
                 .discipline(bet.getDiscipline())
                 .build();
+    }
+
+    @Transactional
+    @SneakyThrows
+    public List<BetToTicketResponse> isBetInBets(List<String> betId) {
+        System.out.println(betId.toString());
+        return betRepository.findById(betId).stream()
+                .map(bet ->
+                        BetToTicketResponse.builder()
+                                ._id(bet.get_id())
+                                .hostRate(bet.getHostRate())
+                                .guestRate(bet.getGuestRate())
+                                .hostname(bet.getHostname())
+                                .guestname(bet.getGuestname())
+                                .build()
+                ).toList();
     }
 }
