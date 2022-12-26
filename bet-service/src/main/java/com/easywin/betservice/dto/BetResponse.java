@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BetResponse {
-    private String id;
+    private String _id;
     private String description;
     private String hostRate;
     private String guestRate;

@@ -11,12 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TicketLineItemsDto {
-    private Long id;
-
-    private Long BetId;
-
+    private Long _id;
+    private String betId;
     private String choice;
-
-    private Float rate;
-
+    private Double rate;
 }

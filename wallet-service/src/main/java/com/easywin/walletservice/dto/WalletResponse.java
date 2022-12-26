@@ -12,5 +12,4 @@ import lombok.NoArgsConstructor;
 public class WalletResponse {
     private String _id;
     private Double balance;
-
 }

@@ -5,8 +5,10 @@ import com.easywin.betservice.dto.BetResponse;
 import com.easywin.betservice.model.Bet;
 import com.easywin.betservice.repository.BetRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,7 +53,7 @@ public class BetService {
 
     private BetResponse mapToBetResponse(Bet bet) {
         return BetResponse.builder()
-                .id(bet.get_id())
+                ._id(bet.get_id())
                 .description(bet.getDescription())
                 .hostRate(bet.getHostRate())
                 .guestRate(bet.getGuestRate())

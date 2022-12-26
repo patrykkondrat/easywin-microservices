@@ -15,7 +15,6 @@ import javax.persistence.*;
 public class Wallet {
     @Id
     private String _id;
-    @NotNull
     private Double balance;
 }
 

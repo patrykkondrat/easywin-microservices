@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import javax.websocket.server.PathParam;
 import java.util.Optional;
 
 @RestController
@@ -24,7 +25,7 @@ public class WalletController {
         return walletService.getBalanceById(walletRequest);
     }
 
-    @PostMapping
+    @PostMapping("/add")
     @ResponseStatus(HttpStatus.CREATED)
     public Wallet createWallet() {
         return walletService.createWallet();
@@ -33,7 +34,7 @@ public class WalletController {
 
     @PostMapping("/{value}")
     @ResponseStatus(HttpStatus.OK)
-    public void increaseBalance(@RequestBody WalletRequest walletRequest, @PathVariable Double value) {
+    public void increaseBalance(@RequestBody WalletRequest walletRequest, @PathParam("value") Double value) {
         String out = walletService.changeBalance(walletRequest, value);
         if (value >= 0) {
             log.info("Account " + walletRequest.get_id() + " increase.");

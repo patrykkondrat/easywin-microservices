@@ -4,10 +4,7 @@ import com.easywin.ticketservice.dto.TicketRequest;
 import com.easywin.ticketservice.service.TicketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/ticket")
@@ -18,7 +15,7 @@ public class TicketController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public String placeTicket(TicketRequest ticketRequest) {
+    public String placeTicket(@RequestBody TicketRequest ticketRequest) {
         ticketService.placeTicket(ticketRequest);
         return "Ticket accepted";
     }

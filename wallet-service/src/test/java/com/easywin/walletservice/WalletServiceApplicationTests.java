@@ -52,9 +52,8 @@ class WalletServiceApplicationTests {
 		String walletString = objectMapper.writeValueAsString(getWalletRequest());
 		mockMvc.perform(MockMvcRequestBuilders.post("/api/wallet/-100.0")
 						.param("_id", "1"))
-					.andExpect(status().isOk());
+				.andExpect(status().isOk());
 	}
-
 
 	private WalletRequest getWalletRequest() {
 		return WalletRequest.builder()

@@ -67,7 +67,6 @@ class BetServiceApplicationTests {
 		assertEquals(betRepository.findAll().size(), 0);
 	}
 
-
 	private BetRequest getBetRequest(){
 		return BetRequest.builder()
 				.description("Who win?")
