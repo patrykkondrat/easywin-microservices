@@ -5,7 +5,6 @@ import com.easywin.betservice.dto.BetResponse;
 import com.easywin.betservice.dto.BetToTicketResponse;
 import com.easywin.betservice.service.BetService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +15,7 @@ import java.util.Optional;
 @RequestMapping("/api/bet")
 @RequiredArgsConstructor
 public class BetController {
-    @Autowired
+
     private final BetService betService;
 
     @GetMapping
@@ -45,7 +44,7 @@ public class BetController {
 
     @GetMapping("/isbet")
     @ResponseStatus(HttpStatus.OK)
-    public List<BetToTicketResponse> isBet(@RequestParam List<String> Id) {
-        return betService.isBetInBets(Id);
+    public List<BetToTicketResponse> isBet(@RequestParam List<String> id) {
+        return betService.isBetInBets(id);
     }
 }

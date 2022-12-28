@@ -65,11 +65,11 @@ public class BetService {
                 .build();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @SneakyThrows
     public List<BetToTicketResponse> isBetInBets(List<String> betId) {
-        System.out.println(betId.toString());
-        return betRepository.findById(betId).stream()
+        log.info(betId.toString());
+        return betRepository.findBy_id(betId).stream()
                 .map(bet ->
                         BetToTicketResponse.builder()
                                 ._id(bet.get_id())

@@ -38,25 +38,27 @@ public class TicketService {
                 .map(TicketLineItems::getBetId)
                 .toList();
 
-        BetToTicketResponse[] responsesArray =
+        BetToTicketResponse[] responseArray =
                 webClient.get()
                 .uri("http://localhost:8080/api/bet/isbet",
                         uriBuilder ->
-                                uriBuilder.queryParam("betId", betsId)
+                                uriBuilder.queryParam("id", betsId)
                                         .build())
                 .retrieve()
                 .bodyToMono(BetToTicketResponse[].class)
                 .block();
 
-        boolean responseArrays = Arrays.stream(responsesArray)
+        boolean responseArraysMatch = Arrays.stream(responseArray)
                 .anyMatch(betToTicketResponse ->
                         betToTicketResponse.get_id() == null);
 
-        System.out.println(betsId);
-        System.out.println(responsesArray);
-        System.out.println(responseArrays);
+        if (responseArray.length != ticketLineItems.size()) throw new AssertionError();
 
-        if (responseArrays) {
+        System.out.println(betsId);
+        System.out.println(responseArray);
+        System.out.println(responseArraysMatch);
+
+        if (!responseArraysMatch) {
             ticketRepository.save(ticket);
         } else {
             throw new IllegalArgumentException("Bet isn't available.");
