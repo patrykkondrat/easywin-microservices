@@ -7,17 +7,17 @@ import com.easywin.ticketservice.model.Ticket;
 import com.easywin.ticketservice.model.TicketLineItems;
 import com.easywin.ticketservice.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class TicketService {
 
     private final TicketRepository ticketRepository;
@@ -25,43 +25,56 @@ public class TicketService {
 
     public void placeTicket(TicketRequest ticketRequest) {
         Ticket ticket = new Ticket();
+
+        // Set UUID
         ticket.setTicketNumber(UUID.randomUUID().toString());
 
+        // map JSONs list of tickets to DTO
         List<TicketLineItems> ticketLineItems = ticketRequest.getTicketLineItemsDtoList()
                 .stream()
                 .map(this::mapToDto)
                 .toList();
 
+        // Set ticket
         ticket.setTicketLineItemsList(ticketLineItems);
 
+        // checking is all bets in "stock"
+        // get all of ids
         List<String> betsId = ticket.getTicketLineItemsList().stream()
                 .map(TicketLineItems::getBetId)
                 .toList();
 
+        Set<String> idsWithoutDuplicates = new HashSet<>(betsId);
+
+        // get all bets in ticket from bet service
         BetToTicketResponse[] responseArray =
                 webClient.get()
                 .uri("http://localhost:8080/api/bet/isbet",
                         uriBuilder ->
-                                uriBuilder.queryParam("id", betsId)
-                                        .build())
+                            uriBuilder.queryParam("_id", betsId)
+                                    .build())
                 .retrieve()
                 .bodyToMono(BetToTicketResponse[].class)
                 .block();
 
-        boolean responseArraysMatch = Arrays.stream(responseArray)
-                .anyMatch(betToTicketResponse ->
-                        betToTicketResponse.get_id() == null);
+        List<BetToTicketResponse> withoutNullResponseList= new ArrayList<>();
+        for (BetToTicketResponse betToTicketResponse: responseArray) {
+            if (betToTicketResponse != null) {
+                withoutNullResponseList.add(betToTicketResponse);
+            }
+        }
 
-        if (responseArray.length != ticketLineItems.size()) throw new AssertionError();
 
-        System.out.println(betsId);
-        System.out.println(responseArray);
-        System.out.println(responseArraysMatch);
+        System.out.println("JSONs bets ID: " + ticketLineItems);
+        System.out.println("IDs without duplicates: " + idsWithoutDuplicates);
+        System.out.println("Avaiable ids: " + Arrays.toString(responseArray));
+        System.out.println("Is both of length is the same: " + (responseArray.length == idsWithoutDuplicates.size()));
 
-        if (!responseArraysMatch) {
+        if (responseArray != null && withoutNullResponseList.size() == idsWithoutDuplicates.size()) {
+            log.info("Ticket number: " + ticket);
             ticketRepository.save(ticket);
         } else {
-            throw new IllegalArgumentException("Bet isn't available.");
+            throw new IllegalArgumentException("Bet isn't available");
         }
     }
 

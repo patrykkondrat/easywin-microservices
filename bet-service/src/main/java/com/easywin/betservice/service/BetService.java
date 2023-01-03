@@ -11,9 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -22,7 +20,6 @@ public class BetService {
 
     private final BetRepository betRepository;
 
-    // create
     public void createBet(BetRequest betRequest){
         Bet bet = Bet.builder()
                 ._id(UUID.randomUUID().toString())
@@ -34,20 +31,21 @@ public class BetService {
                 .date(betRequest.getDate())
                 .discipline(betRequest.getDiscipline())
                 .build();
+        log.info("Bet " + bet.toString() + " saved");
         betRepository.save(bet);
-        log.info("Bet " + bet.get_id() + " saved");
+
     }
-    // delete
-    public void deleteBet(String id){
-        betRepository.deleteById(id);
-        log.info("Bet " + id + " delated");
+
+    public void deleteBet(String _id){
+        betRepository.deleteById(_id);
+        log.info("Bet " + _id + " delated");
     }
-    // get
+
     public List<BetResponse> getAllBet() {
         List<Bet> bets = betRepository.findAll();
         return bets.stream().map(this::mapToBetResponse).toList();
     }
-    // get by id
+
     public Optional<BetResponse> getBetById(String id) {
         return betRepository.findById(id).map(this::mapToBetResponse);
     }
@@ -67,17 +65,24 @@ public class BetService {
 
     @Transactional(readOnly = true)
     @SneakyThrows
-    public List<BetToTicketResponse> isBetInBets(List<String> betId) {
-        log.info(betId.toString());
-        return betRepository.findBy_id(betId).stream()
-                .map(bet ->
-                        BetToTicketResponse.builder()
-                                ._id(bet.get_id())
-                                .hostRate(bet.getHostRate())
-                                .guestRate(bet.getGuestRate())
-                                .hostname(bet.getHostname())
-                                .guestname(bet.getGuestname())
-                                .build()
-                ).toList();
+    public List<BetToTicketResponse> isBetInBets(List<String> _id) {
+        Set<String> idSet = new HashSet<String>(_id);
+        List<Optional<Bet>> listOfBets = idSet.stream().map(betRepository::findById).toList();
+        return listOfBets.stream()
+                .map(bet -> {
+                    if (bet.isPresent()) {
+                        return BetToTicketResponse.builder()
+                                ._id(bet.orElseGet(null).get_id())
+                                .hostRate(bet.orElseGet(null).getHostRate())
+                                .guestRate(bet.orElseGet(null).getGuestRate())
+                                .hostname(bet.orElseGet(null).getHostname())
+                                .guestname(bet.orElseGet(null).getGuestname())
+                                .build();
+                    } else {
+                        return null;
+                    }
+                })
+                .toList();
+
     }
 }

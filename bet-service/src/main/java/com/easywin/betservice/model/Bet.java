@@ -20,6 +20,7 @@ public class Bet {
     private String guestRate;
     private String hostname;
     private String guestname;
+    private BetStatus betStatus;
     private String date;
     private String discipline;
 
