@@ -21,7 +21,7 @@ import java.util.*;
 public class TicketService {
 
     private final TicketRepository ticketRepository;
-    private final WebClient webClient;
+    private final WebClient.Builder webClientBuilder;
 
     public void placeTicket(TicketRequest ticketRequest) {
         Ticket ticket = new Ticket();
@@ -48,8 +48,8 @@ public class TicketService {
 
         // get all bets in ticket from bet service
         BetToTicketResponse[] responseArray =
-                webClient.get()
-                .uri("http://localhost:8080/api/bet/isbet",
+                webClientBuilder.build().get()
+                .uri("http://bet-service/api/bet/isbet",
                         uriBuilder ->
                             uriBuilder.queryParam("_id", betsId)
                                     .build())
@@ -64,14 +64,8 @@ public class TicketService {
             }
         }
 
-
-        System.out.println("JSONs bets ID: " + ticketLineItems);
-        System.out.println("IDs without duplicates: " + idsWithoutDuplicates);
-        System.out.println("Avaiable ids: " + Arrays.toString(responseArray));
-        System.out.println("Is both of length is the same: " + (responseArray.length == idsWithoutDuplicates.size()));
-
         if (responseArray != null && withoutNullResponseList.size() == idsWithoutDuplicates.size()) {
-            log.info("Ticket number: " + ticket);
+            log.info("Ticket number: " + ticket.getTicketNumber());
             ticketRepository.save(ticket);
         } else {
             throw new IllegalArgumentException("Bet isn't available");
