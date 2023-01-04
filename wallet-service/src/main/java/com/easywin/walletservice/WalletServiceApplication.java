@@ -1,7 +1,5 @@
 package com.easywin.walletservice;
 
-import com.easywin.walletservice.model.Wallet;
-import com.easywin.walletservice.repository.WalletRepository;
 import com.easywin.walletservice.service.WalletService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -10,7 +8,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class WalletServiceApplication {
-
 
 	@Autowired
 	private WalletService walletService;

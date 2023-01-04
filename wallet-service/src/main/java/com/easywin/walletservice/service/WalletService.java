@@ -4,7 +4,6 @@ import com.easywin.walletservice.dto.WalletRequest;
 import com.easywin.walletservice.model.Wallet;
 import com.easywin.walletservice.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -29,7 +28,6 @@ public class WalletService {
 
     public String changeBalance(WalletRequest walletRequest, Double value) {
         Optional<Wallet> wallet = walletRepository.findById(walletRequest.get_id()).map(this::mapToWallet);
-        System.out.println(wallet.get().toString());
         if (wallet.get().getBalance() + value < 0.00) {
             return "Can't decrease over 0.00";
         }

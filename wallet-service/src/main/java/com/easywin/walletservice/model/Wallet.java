@@ -1,9 +1,10 @@
 package com.easywin.walletservice.model;
 
-import com.sun.istack.NotNull;
 import lombok.*;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "t_wallet")
