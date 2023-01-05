@@ -26,27 +26,21 @@ public class TicketService {
     public void placeTicket(TicketRequest ticketRequest) {
         Ticket ticket = new Ticket();
 
-        // Set UUID
         ticket.setTicketNumber(UUID.randomUUID().toString());
 
-        // map JSONs list of tickets to DTO
         List<TicketLineItems> ticketLineItems = ticketRequest.getTicketLineItemsDtoList()
                 .stream()
                 .map(this::mapToDto)
                 .toList();
 
-        // Set ticket
         ticket.setTicketLineItemsList(ticketLineItems);
 
-        // checking is all bets in "stock"
-        // get all of ids
         List<String> betsId = ticket.getTicketLineItemsList().stream()
                 .map(TicketLineItems::getBetId)
                 .toList();
 
         Set<String> idsWithoutDuplicates = new HashSet<>(betsId);
 
-        // get all bets in ticket from bet service
         BetToTicketResponse[] responseArray =
                 webClientBuilder.build().get()
                 .uri("http://bet-service/api/bet/isbet",

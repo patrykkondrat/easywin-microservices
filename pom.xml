@@ -20,6 +20,7 @@
         <module>wallet-service</module>
         <module>chat-service</module>
         <module>discovery-server</module>
+        <module>api-gateway</module>
     </modules>
 
     <properties>
