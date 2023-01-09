@@ -24,9 +24,9 @@ public class BetController {
         return betService.getAllBet();
     }
 
-    @GetMapping("/{Id}")
+    @GetMapping("/id")
     @ResponseStatus(HttpStatus.OK)
-    public Optional<BetResponse> getBetById(@PathVariable("Id") String Id) {
+    public Optional<BetResponse> getBetById(@RequestParam("Id") String Id) {
         return betService.getBetById(Id);
     }
 
@@ -36,9 +36,9 @@ public class BetController {
         betService.createBet(betRequest);
     }
 
-    @DeleteMapping("/{Id}")
+    @DeleteMapping("/id")
     @ResponseStatus(HttpStatus.OK)
-    public void deleteBet(@PathVariable("Id") String Id){
+    public void deleteBet(@RequestParam("Id") String Id){
         betService.deleteBet(Id);
     }
 

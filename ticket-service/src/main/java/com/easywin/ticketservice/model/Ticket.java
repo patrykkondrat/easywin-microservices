@@ -11,7 +11,6 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
 public class Ticket {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,4 +18,6 @@ public class Ticket {
     private String ticketNumber;
     @OneToMany(cascade = CascadeType.ALL)
     private List<TicketLineItems> ticketLineItemsList;
+
+    private Double overall;
 }

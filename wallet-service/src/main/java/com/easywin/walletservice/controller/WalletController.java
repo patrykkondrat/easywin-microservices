@@ -32,10 +32,10 @@ public class WalletController {
 
     }
 
-    @PostMapping("/{value}")
+    @PostMapping()
     @ResponseStatus(HttpStatus.OK)
-    public void increaseBalance(@RequestBody WalletRequest walletRequest, @PathParam("value") Double value) {
-        String out = walletService.changeBalance(walletRequest, value);
+    public void increaseBalance(@RequestBody WalletRequest walletRequest, @RequestParam("value") Double value) {
+        walletService.changeBalance(walletRequest, value);
         if (value >= 0) {
             log.info("Account " + walletRequest.get_id() + " increase.");
         } else {

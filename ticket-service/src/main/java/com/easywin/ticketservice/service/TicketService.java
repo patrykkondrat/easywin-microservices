@@ -41,6 +41,10 @@ public class TicketService {
 
         Set<String> idsWithoutDuplicates = new HashSet<>(betsId);
 
+        if (betsId.size() != idsWithoutDuplicates.size()) {
+            throw new IllegalArgumentException("Duplicates in ticket.");
+        }
+
         BetToTicketResponse[] responseArray =
                 webClientBuilder.build().get()
                 .uri("http://bet-service/api/bet/isbet",
@@ -57,6 +61,13 @@ public class TicketService {
                 withoutNullResponseList.add(betToTicketResponse);
             }
         }
+
+        Double overall = 1.00;
+        for (TicketLineItems response: ticketLineItems) {
+            overall *= response.getRate();
+        }
+        ticket.setOverall(overall);
+
 
         if (responseArray != null && withoutNullResponseList.size() == idsWithoutDuplicates.size()) {
             log.info("Ticket number: " + ticket.getTicketNumber());

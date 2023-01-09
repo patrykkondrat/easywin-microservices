@@ -30,3 +30,4 @@ Microservice app for betting.
 
 
 -> Mini Frontend?
+-> think about microservices has shared databases
