@@ -21,8 +21,5 @@ public class SecurityConfig {
                                 .authenticated())
                 .oauth2ResourceServer(ServerHttpSecurity.OAuth2ResourceServerSpec::jwt);
         return serverHttpSecurity.build();
-
-
-
     }
 }
