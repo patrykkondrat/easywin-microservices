@@ -64,7 +64,6 @@ public class BetService {
     }
 
     @Transactional(readOnly = true)
-    @SneakyThrows
     public List<BetToTicketResponse> isBetInBets(List<String> _id) {
         Set<String> idSet = new HashSet<>(_id);
         List<Optional<Bet>> listOfBets = idSet.stream().map(betRepository::findById).toList();

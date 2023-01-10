@@ -8,6 +8,8 @@ import com.easywin.ticketservice.model.TicketLineItems;
 import com.easywin.ticketservice.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.sleuth.Span;
+import org.springframework.cloud.sleuth.Tracer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -22,8 +24,9 @@ public class TicketService {
 
     private final TicketRepository ticketRepository;
     private final WebClient.Builder webClientBuilder;
+    private final Tracer tracer;
 
-    public void placeTicket(TicketRequest ticketRequest) {
+    public String placeTicket(TicketRequest ticketRequest) {
         Ticket ticket = new Ticket();
 
         ticket.setTicketNumber(UUID.randomUUID().toString());
@@ -45,36 +48,44 @@ public class TicketService {
             throw new IllegalArgumentException("Duplicates in ticket.");
         }
 
-        BetToTicketResponse[] responseArray =
-                webClientBuilder.build().get()
-                .uri("http://bet-service/api/bet/isbet",
-                        uriBuilder ->
-                            uriBuilder.queryParam("_id", betsId)
-                                    .build())
-                .retrieve()
-                .bodyToMono(BetToTicketResponse[].class)
-                .block();
+        Span betServiceLookup = tracer.nextSpan().name("BetServiceLookup");
+        try (Tracer.SpanInScope inScope = tracer.withSpan(betServiceLookup.start())) {
+            BetToTicketResponse[] responseArray =
+                    webClientBuilder.build().get()
+                            .uri("http://bet-service/api/bet/isbet",
+                                    uriBuilder ->
+                                            uriBuilder.queryParam("_id", betsId)
+                                                    .build())
+                            .retrieve()
+                            .bodyToMono(BetToTicketResponse[].class)
+                            .block();
 
-        List<BetToTicketResponse> withoutNullResponseList= new ArrayList<>();
-        for (BetToTicketResponse betToTicketResponse: responseArray) {
-            if (betToTicketResponse != null) {
-                withoutNullResponseList.add(betToTicketResponse);
+            List<BetToTicketResponse> withoutNullResponseList= new ArrayList<>();
+            for (BetToTicketResponse betToTicketResponse: responseArray) {
+                if (betToTicketResponse != null) {
+                    withoutNullResponseList.add(betToTicketResponse);
+                }
             }
+
+            Double overall = 1.00;
+            for (TicketLineItems response: ticketLineItems) {
+                overall *= response.getRate();
+            }
+            ticket.setOverall(overall);
+
+
+            if (responseArray != null && withoutNullResponseList.size() == idsWithoutDuplicates.size()) {
+                log.info("Ticket number: " + ticket.getTicketNumber());
+                ticketRepository.save(ticket);
+                return "Ticket accepted.";
+            } else {
+                throw new IllegalArgumentException("Bet isn't available");
+            }
+        } finally {
+            betServiceLookup.end();
         }
 
-        Double overall = 1.00;
-        for (TicketLineItems response: ticketLineItems) {
-            overall *= response.getRate();
-        }
-        ticket.setOverall(overall);
 
-
-        if (responseArray != null && withoutNullResponseList.size() == idsWithoutDuplicates.size()) {
-            log.info("Ticket number: " + ticket.getTicketNumber());
-            ticketRepository.save(ticket);
-        } else {
-            throw new IllegalArgumentException("Bet isn't available");
-        }
     }
 
     private TicketLineItems mapToDto(TicketLineItemsDto ticketLineItemsDto) {

@@ -2,10 +2,15 @@ package com.easywin.ticketservice.controller;
 
 import com.easywin.ticketservice.dto.TicketRequest;
 import com.easywin.ticketservice.service.TicketService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/ticket")
@@ -17,8 +22,14 @@ public class TicketController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public String placeTicket(@RequestBody TicketRequest ticketRequest) {
-        ticketService.placeTicket(ticketRequest);
-        return "Ticket accepted";
+    @CircuitBreaker(name = "bet", fallbackMethod = "fallbackMethod")
+    @TimeLimiter(name = "bet")
+    @Retry(name = "bet")
+    public CompletableFuture<String> placeTicket(@RequestBody TicketRequest ticketRequest) {
+        return CompletableFuture.supplyAsync(() -> ticketService.placeTicket(ticketRequest));
+    }
+
+    public CompletableFuture<String> fallbackMethod(TicketRequest ticketRequest, RuntimeException runtimeException) {
+        return CompletableFuture.supplyAsync(() -> "Try again later.");
     }
 }
