@@ -1,15 +1,17 @@
 package com.easywin.ticketservice.service;
 
+import brave.Span;
+import brave.Tracer;
 import com.easywin.ticketservice.dto.BetToTicketResponse;
 import com.easywin.ticketservice.dto.TicketLineItemsDto;
 import com.easywin.ticketservice.dto.TicketRequest;
+import com.easywin.ticketservice.event.TicketPlaceEvent;
 import com.easywin.ticketservice.model.Ticket;
 import com.easywin.ticketservice.model.TicketLineItems;
 import com.easywin.ticketservice.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cloud.sleuth.Span;
-import org.springframework.cloud.sleuth.Tracer;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -25,6 +27,7 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final WebClient.Builder webClientBuilder;
     private final Tracer tracer;
+    private final KafkaTemplate<String, TicketPlaceEvent> kafkaTemplate;
 
     public String placeTicket(TicketRequest ticketRequest) {
         Ticket ticket = new Ticket();
@@ -49,7 +52,11 @@ public class TicketService {
         }
 
         Span betServiceLookup = tracer.nextSpan().name("BetServiceLookup");
-        try (Tracer.SpanInScope inScope = tracer.withSpan(betServiceLookup.start())) {
+
+        try (Tracer.SpanInScope inScope = tracer.withSpanInScope(betServiceLookup.start())) {
+
+            betServiceLookup.tag("call", "bet-service");
+
             BetToTicketResponse[] responseArray =
                     webClientBuilder.build().get()
                             .uri("http://bet-service/api/bet/isbet",
@@ -75,17 +82,16 @@ public class TicketService {
 
 
             if (responseArray != null && withoutNullResponseList.size() == idsWithoutDuplicates.size()) {
-                log.info("Ticket number: " + ticket.getTicketNumber());
                 ticketRepository.save(ticket);
+                kafkaTemplate.send("notificationTopic", new TicketPlaceEvent(ticket.getTicketNumber()));
+                log.info("send - {}", ticket.getTicketNumber());
                 return "Ticket accepted.";
             } else {
                 throw new IllegalArgumentException("Bet isn't available");
             }
         } finally {
-            betServiceLookup.end();
+            betServiceLookup.flush();
         }
-
-
     }
 
     private TicketLineItems mapToDto(TicketLineItemsDto ticketLineItemsDto) {
