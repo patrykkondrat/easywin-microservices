@@ -1,0 +1,192 @@
+---
+version: '3'
+services:
+  mysql-ticket:
+    container_name: mysql-ticket
+    image: mysql:8.0.31
+    environment:
+      MYSQL_DB: ticket-service
+      MYSQL_USER: patryk
+      MYSQL_PASSWORD: Mysql304575!
+      MYSQL_ROOT_PASSWORD: Mysql304575!
+    ports:
+      - "3308:3308"
+    expose:
+      - "3308"
+    volumes:
+      - ./mysql-ticket:/var/lib/mysql
+    restart: unless-stopped
+
+  mysql-wallet:
+    container_name: mysql-wallet
+    image: mysql:8.0.31
+    environment:
+      MYSQL_DB: wallet-service
+      MYSQL_USER: patryk
+      MYSQL_PASSWORD: Mysql304575!
+      MYSQL_ROOT_PASSWORD: Mysql304575!
+    ports:
+      - "3307:3307"
+    expose:
+      - "3307"
+    volumes:
+      - ./mysql-wallet:/var/lib/mysql
+    restart: unless-stopped
+
+  mongodb-bet:
+    container_name: mongodb-bet
+    image: mongo:4.4.2
+    ports:
+      - "27017:27017"
+    expose:
+      - "27017"
+    volumes:
+      - ./mongodb-bet:/data/db
+    restart: unless-stopped
+
+  keycloak-mysql:
+    container_name: keycloak-mysql
+    image: mysql:8.0.31
+    volumes:
+      - ./mysql_keycloak_data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: keycloak
+      MYSQL_USER: patryk
+      MYSQL_PASSWORD: Mysql304575!
+      MYSQL_ROOT_PASSWORD: Mysql304575!
+
+  keycloak:
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:20.0.2
+    command: ["start-dev", "--import-realm"]
+    environment:
+      DB_VENDOR: MYSQL
+      DB_ADDR: mysql
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_PASSWORD: password
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./realms/:/opt/keycloak/data/import/
+    depends_on:
+      - keycloak-mysql
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: broker
+    ports:
+      # To learn about configuring Kafka for access across networks see
+      # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+  zipkin:
+    container_name: zipkin
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+
+  discovery-server:
+    container_name: discovery-server
+    image: dr34mer99/discovery-server:latest
+#    pull_policy: always
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+    depends_on:
+      - zipkin
+
+  api-gateway:
+    container_name: api-gateway
+    image: dr34mer99/api-gateway:latest
+#    pull_policy: always
+    ports:
+      - "8080:8080"
+    expose:
+      - "8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY=TRACE
+    depends_on:
+      - zipkin
+      - discovery-server
+      - keycloak
+
+
+  bet-service:
+    container_name: bet-service
+    image: dr34mer99/bet-service:latest
+#    pull_policy: always
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+    depends_on:
+      - mongodb-bet
+      - zipkin
+      - api-gateway
+      - discovery-server
+
+  chat-service:
+    container_name: chat-service
+    image: dr34mer99/chat-service:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+    depends_on:
+      - zipkin
+      - api-gateway
+      - discovery-server
+
+  notification-service:
+    container_name: notification-service
+    image: dr34mer99/notification-service:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+    depends_on:
+      - zipkin
+      - broker
+      - discovery-server
+      - api-gateway
+
+  wallet-service:
+    container_name: wallet-service
+    image: dr34mer99/wallet-service:latest
+    environment:
+      - SPRING_ACTIVE_PROFILES=default
+    depends_on:
+      - zipkin
+      - discovery-server
+      - api-gateway
+      - mysql-wallet
+
+  ticket-service:
+    container_name: ticket-service
+    image: dr34mer99/ticket-service:latest
+    environment:
+      - SPRING_ACTIVE_PROFILES=default
+    depends_on:
+      - api-gateway
+      - zipkin
+      - mysql-ticket
+      - bet-service
+      - discovery-server
+      - broker
+
