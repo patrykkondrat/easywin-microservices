@@ -10,12 +10,11 @@ import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 
 
 @Configuration
-@EnableWebSecurity
 public class SecrurityConfig extends WebSecurityConfigurerAdapter {
 
-    @Value("${eureka.username}")
+    @Value("${app.eureka.username}")
     private String username;
-    @Value("${eureka.password}")
+    @Value("${app.eureka.password}")
     private String password;
 
     @Override
@@ -27,7 +26,7 @@ public class SecrurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Override
-    public void configure(HttpSecurity httpSecurity) throws Exception {
+    protected void configure(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf().disable()
                 .authorizeRequests().anyRequest()
                 .authenticated()
