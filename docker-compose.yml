@@ -1,5 +1,11 @@
 
 version: '3'
+volumes:
+  postgres-ticket:
+  postgres-wallet:
+  prometheus:
+  grafana:
+
 services:
   # DATABASES
   # TICKET POSTGRES
@@ -12,7 +18,7 @@ services:
       POSTGRES_PASSWORD: password
       PGDATA: /data/postgres
     volumes:
-      - ./postgres-ticket:/data/postgres
+      - ./postgres-ticket:/var/lib/postgres/data
     expose:
       - "5431"
     ports:
@@ -25,14 +31,15 @@ services:
     container_name: postgres-wallet
     image: postgres
     environment:
-      POSTGRES_DB: wallet-service
+      POSTGRES_DB: wallet_service
       POSTGRES_USER: root
       POSTGRES_PASSWORD: password
       PGDATA: /data/postgres
     volumes:
-      - ./postgres-wallet:/data/postgres
+      - ./postgres-wallet:/var/lib/postgres/data
     ports:
-      - "5433:5433"
+      - "5430:5430" #zmiana portu
+    command: -p 5430
     restart: always
 
   # BET MONGO
@@ -173,7 +180,7 @@ services:
     image: dr34mer99/wallet-service:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-wallet:5433/wallet-service
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-wallet:5430/wallet_service
     depends_on:
       - postgres-wallet
       - discovery-server
@@ -195,10 +202,39 @@ services:
   chat-service:
     container_name: chat-service
     image: dr34mer99/chat-service:latest
-    pull_policy: always
     environment:
       - SPRING_PROFILES_ACTIVE=docker
     depends_on:
       - zipkin
       - discovery-server
       - api-gateway
+
+  prometheus:
+    image: prom/prometheus:v2.37.1
+    container_name: prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - bet-service
+      - ticket-service
+      - chat-service
+      - notification-service
+      - wallet-service
+
+  grafana:
+    image: grafana/grafana-oss:8.5.2
+    container_name: grafana
+    restart: always
+    user: '472'
+    ports:
+      - "3000:3000"
+    links:
+      - prometheus:prometheus
+#    volumes:
+#      - ./grafana:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=password
