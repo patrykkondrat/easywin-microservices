@@ -70,7 +70,7 @@ services:
   keycloak:
     container_name: keycloak
     image: quay.io/keycloak/keycloak:20.0.2
-    command: [ "start-dev", "--import-realm" ]
+    command: ["start-dev", "--import-realm"]
     environment:
       DB_VENDOR: MYSQL
       DB_ADDR: mysql
@@ -120,7 +120,6 @@ services:
     ports:
       - "9411:9411"
 
-
   # MICROSERVICES
   # EUREKA SERVER
   discovery-server:
@@ -143,7 +142,7 @@ services:
       - "8181"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY= TRACE
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY=TRACE
     depends_on:
       - zipkin
       - discovery-server
@@ -164,6 +163,8 @@ services:
   ticket-service:
     container_name: ticket-service
     image: dr34mer99/ticket-service:latest
+    ports:
+      - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-ticket:5431/ticket_service
@@ -192,6 +193,9 @@ services:
     image: dr34mer99/notification-service:latest
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+    links:
+      - ticket-service:ticket-service
+      - broker:broker
     depends_on:
       - zipkin
       - broker
@@ -210,11 +214,13 @@ services:
       - api-gateway
 
   prometheus:
-    image: prom/prometheus:v2.37.1
+    image: prom/prometheus:v2.37.2
     container_name: prometheus
     restart: always
     ports:
       - "9090:9090"
+    expose:
+      - "9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     depends_on:
@@ -225,16 +231,18 @@ services:
       - wallet-service
 
   grafana:
-    image: grafana/grafana-oss:8.5.2
+    image: grafana/grafana-oss:latest-ubuntu
     container_name: grafana
     restart: always
-    user: '472'
+#    user: '472'
     ports:
       - "3000:3000"
+    expose:
+      - "3000"
     links:
       - prometheus:prometheus
-#    volumes:
-#      - ./grafana:/var/lib/grafana
+    volumes:
+      - ./grafana:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=password

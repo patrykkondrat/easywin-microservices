@@ -43,3 +43,17 @@ Microservice app for betting.
 -> rate limiting on gateway !! \
 -> change WebSecurityConfigAdapter (deprecated) to SecurityFilterChain!
 
+
+Tech stack
+* Spring Boot
+* JPA/Hibernate
+* Apache Kafka
+* Keycloak
+* Prometheus
+* Grafana
+* Zipkin
+
+Problems:
+In docker compose
+* notification service can't connect with bootstrap server
+* 

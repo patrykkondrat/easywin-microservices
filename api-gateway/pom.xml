@@ -45,6 +45,8 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+            <version>3.0.1</version>
+            <scope>runtime</scope>
         </dependency>
 
         <dependency>

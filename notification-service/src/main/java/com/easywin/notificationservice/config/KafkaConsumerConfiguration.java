@@ -26,7 +26,7 @@ public class KafkaConsumerConfiguration {
     @Bean
     ConsumerFactory<String, TicketPlaceEvent> consumerFactory() {
         Map<String, Object> properties = new HashMap<>();
-        properties.put("bootstrap.servers", "localhost:9092");
+//        properties.put("bootstrap.servers", "broker:9092");
         properties.put("group.id", "group");
         properties.put("enable.auto.commit", false);
         properties.put("auto.commit.interval.ms", "10");
