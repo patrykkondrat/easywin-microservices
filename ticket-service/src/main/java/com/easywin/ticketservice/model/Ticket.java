@@ -18,6 +18,5 @@ public class Ticket {
     private String ticketNumber;
     @OneToMany(cascade = CascadeType.ALL)
     private List<TicketLineItems> ticketLineItemsList;
-
     private Double overall;
 }

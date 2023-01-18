@@ -18,14 +18,15 @@ Microservice app for betting.
 * api gateway 
   * "unification path" for all services, 
   * connecting https to api gateway, when other services communicate by http
-  * `keycloak` api auth service
-* zipkin
+* `keycloak` api auth service
+* `zipkin`
 
 
 ### Future ideas
 * statistic/analyse service
 * auth service
   * 3 types of accounts: user, stuff, admin
+  * user age verification
 * promo service
   * promo and bonus management
 * payment service
@@ -42,3 +43,17 @@ Microservice app for betting.
 -> rate limiting on gateway !! \
 -> change WebSecurityConfigAdapter (deprecated) to SecurityFilterChain!
 
+
+Tech stack
+* Spring Boot
+* JPA/Hibernate
+* Apache Kafka
+* Keycloak
+* Prometheus
+* Grafana
+* Zipkin
+
+Problems:
+In docker compose
+* notification service can't connect with bootstrap server
+* 

@@ -1,12 +1,11 @@
 package com.easywin.notificationservice.config;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
-import java.util.Map;
 
-@ConfigurationProperties(prefix = "kafka")
+@EnableConfigurationProperties
 public class KafkaConsumerProperties {
 
     @NotEmpty

@@ -1,60 +1,72 @@
----
+
 version: '3'
+volumes:
+  postgres-ticket:
+  postgres-wallet:
+  prometheus:
+  grafana:
+
 services:
-  mysql-ticket:
-    container_name: mysql-ticket
-    image: mysql:8.0.31
+  # DATABASES
+  # TICKET POSTGRES
+  postgres-ticket:
+    container_name: postgres-ticket
+    image: postgres
     environment:
-      MYSQL_DB: ticket-service
-      MYSQL_USER: patryk
-      MYSQL_PASSWORD: Mysql304575!
-      MYSQL_ROOT_PASSWORD: Mysql304575!
-    ports:
-      - "3308:3308"
-    expose:
-      - "3308"
+      POSTGRES_DB: ticket_service
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      PGDATA: /data/postgres
     volumes:
-      - ./mysql-ticket:/var/lib/mysql
-    restart: unless-stopped
+      - ./postgres-ticket:/var/lib/postgres/data
+    expose:
+      - "5431"
+    ports:
+      - "5431:5431"
+    command: -p 5431
+    restart: always
 
-  mysql-wallet:
-    container_name: mysql-wallet
-    image: mysql:8.0.31
+  # WALLET POSTGRES
+  postgres-wallet:
+    container_name: postgres-wallet
+    image: postgres
     environment:
-      MYSQL_DB: wallet-service
-      MYSQL_USER: patryk
-      MYSQL_PASSWORD: Mysql304575!
-      MYSQL_ROOT_PASSWORD: Mysql304575!
-    ports:
-      - "3307:3307"
-    expose:
-      - "3307"
+      POSTGRES_DB: wallet_service
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      PGDATA: /data/postgres
     volumes:
-      - ./mysql-wallet:/var/lib/mysql
-    restart: unless-stopped
+      - ./postgres-wallet:/var/lib/postgres/data
+    ports:
+      - "5430:5430" #zmiana portu
+    command: -p 5430
+    restart: always
 
-  mongodb-bet:
-    container_name: mongodb-bet
-    image: mongo:4.4.2
+  # BET MONGO
+  mongo:
+    container_name: mongo
+    image: mongo:4.4.14-rc0-focal
+    restart: always
     ports:
       - "27017:27017"
     expose:
       - "27017"
     volumes:
-      - ./mongodb-bet:/data/db
-    restart: unless-stopped
+      - ./mongo-data:/data/db
 
+  # KEYCLOACK MYSQL
   keycloak-mysql:
     container_name: keycloak-mysql
-    image: mysql:8.0.31
+    image: mysql:5.7
     volumes:
       - ./mysql_keycloak_data:/var/lib/mysql
     environment:
+      MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: keycloak
-      MYSQL_USER: patryk
-      MYSQL_PASSWORD: Mysql304575!
-      MYSQL_ROOT_PASSWORD: Mysql304575!
+      MYSQL_USER: keycloak
+      MYSQL_PASSWORD: password
 
+  # KEYCLOAK
   keycloak:
     container_name: keycloak
     image: quay.io/keycloak/keycloak:20.0.2
@@ -74,19 +86,21 @@ services:
     depends_on:
       - keycloak-mysql
 
+  # ZOOKEEPER
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.3.0
+    image: confluentinc/cp-zookeeper:7.0.1
     container_name: zookeeper
+    ports:
+      - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
 
+  # KAFKA
   broker:
-    image: confluentinc/cp-kafka:7.3.0
+    image: confluentinc/cp-kafka:7.0.1
     container_name: broker
     ports:
-      # To learn about configuring Kafka for access across networks see
-      # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
       - "9092:9092"
     depends_on:
       - zookeeper
@@ -99,94 +113,136 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
 
+  # ZIPKIN
   zipkin:
-    container_name: zipkin
     image: openzipkin/zipkin
+    container_name: zipkin
     ports:
       - "9411:9411"
 
+  # MICROSERVICES
+  # EUREKA SERVER
   discovery-server:
-    container_name: discovery-server
     image: dr34mer99/discovery-server:latest
-#    pull_policy: always
+    container_name: discovery-server
     ports:
       - "8761:8761"
     environment:
-      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_PROFILES_ACTIVE=docker
     depends_on:
       - zipkin
 
+  # API-GATEWAY
   api-gateway:
-    container_name: api-gateway
     image: dr34mer99/api-gateway:latest
-#    pull_policy: always
+    container_name: api-gateway
     ports:
-      - "8080:8080"
+      - "8181:8080"
     expose:
-      - "8080"
+      - "8181"
     environment:
-      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_PROFILES_ACTIVE=docker
       - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY=TRACE
     depends_on:
       - zipkin
       - discovery-server
       - keycloak
 
-
+  # BET SERVICE
   bet-service:
     container_name: bet-service
     image: dr34mer99/bet-service:latest
-#    pull_policy: always
     environment:
-      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_PROFILES_ACTIVE=docker
     depends_on:
-      - mongodb-bet
-      - zipkin
-      - api-gateway
+      - mongo
       - discovery-server
-
-  chat-service:
-    container_name: chat-service
-    image: dr34mer99/chat-service:latest
-    environment:
-      - SPRING_PROFILES_ACTIVE=default
-    depends_on:
-      - zipkin
       - api-gateway
-      - discovery-server
 
-  notification-service:
-    container_name: notification-service
-    image: dr34mer99/notification-service:latest
+  # TICKET SERVICE
+  ticket-service:
+    container_name: ticket-service
+    image: dr34mer99/ticket-service:latest
+    ports:
+      - "8081:8081"
     environment:
-      - SPRING_PROFILES_ACTIVE=default
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-ticket:5431/ticket_service
     depends_on:
-      - zipkin
+      - postgres-ticket
       - broker
+      - zipkin
       - discovery-server
       - api-gateway
 
+  # WALLET SERVICE
   wallet-service:
     container_name: wallet-service
     image: dr34mer99/wallet-service:latest
     environment:
-      - SPRING_ACTIVE_PROFILES=default
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-wallet:5430/wallet_service
     depends_on:
-      - zipkin
+      - postgres-wallet
       - discovery-server
       - api-gateway
-      - mysql-wallet
 
-  ticket-service:
-    container_name: ticket-service
-    image: dr34mer99/ticket-service:latest
+  # NOTIFICATION SERVICE
+  notification-service:
+    container_name: notification-service
+    image: dr34mer99/notification-service:latest
     environment:
-      - SPRING_ACTIVE_PROFILES=default
+      - SPRING_PROFILES_ACTIVE=docker
+    links:
+      - ticket-service:ticket-service
+      - broker:broker
     depends_on:
-      - api-gateway
       - zipkin
-      - mysql-ticket
-      - bet-service
-      - discovery-server
       - broker
+      - discovery-server
+      - api-gateway
 
+  # CHAT SERVICE
+  chat-service:
+    container_name: chat-service
+    image: dr34mer99/chat-service:latest
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - zipkin
+      - discovery-server
+      - api-gateway
+
+  prometheus:
+    image: prom/prometheus:v2.37.2
+    container_name: prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    expose:
+      - "9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    depends_on:
+      - bet-service
+      - ticket-service
+      - chat-service
+      - notification-service
+      - wallet-service
+
+  grafana:
+    image: grafana/grafana-oss:latest-ubuntu
+    container_name: grafana
+    restart: always
+#    user: '472'
+    ports:
+      - "3000:3000"
+    expose:
+      - "3000"
+    links:
+      - prometheus:prometheus
+    volumes:
+      - ./grafana:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=password
