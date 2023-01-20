@@ -55,5 +55,4 @@ Tech stack
 
 Problems:
 In docker compose
-* notification service can't connect with bootstrap server
 * 

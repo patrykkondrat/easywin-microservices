@@ -5,6 +5,7 @@ import com.easywin.betservice.dto.BetResponse;
 import com.easywin.betservice.dto.BetToTicketResponse;
 import com.easywin.betservice.service.BetService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +15,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/bet")
 @RequiredArgsConstructor
+@Slf4j
 public class BetController {
 
     private final BetService betService;
