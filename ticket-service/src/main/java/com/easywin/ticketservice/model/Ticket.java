@@ -19,4 +19,6 @@ public class Ticket {
     @OneToMany(cascade = CascadeType.ALL)
     private List<TicketLineItems> ticketLineItemsList;
     private Double overall;
+    private Double totalStake;
+    private Double totalWin;
 }

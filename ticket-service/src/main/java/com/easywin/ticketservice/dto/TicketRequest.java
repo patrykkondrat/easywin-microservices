@@ -13,5 +13,5 @@ import java.util.List;
 @NoArgsConstructor
 public class TicketRequest {
     private List<TicketLineItemsDto> ticketLineItemsDtoList;
-
+    private Double totalStake;
 }

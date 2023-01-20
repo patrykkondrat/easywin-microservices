@@ -30,6 +30,7 @@ public class TicketController {
     }
 
     public CompletableFuture<String> fallbackMethod(TicketRequest ticketRequest, RuntimeException runtimeException) {
+        log.info("fallbackMethod called with {}", ticketRequest);
         return CompletableFuture.supplyAsync(() -> "Try again later.");
     }
 }

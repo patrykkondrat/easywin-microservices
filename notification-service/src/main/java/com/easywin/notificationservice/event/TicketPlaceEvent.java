@@ -9,4 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TicketPlaceEvent {
     private String ticketNumber;
+    private Double totalStake;
+    private Double totalWin;
 }

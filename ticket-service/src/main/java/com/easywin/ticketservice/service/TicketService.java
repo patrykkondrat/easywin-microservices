@@ -31,7 +31,7 @@ public class TicketService {
 
     public String placeTicket(TicketRequest ticketRequest) {
         Ticket ticket = new Ticket();
-
+        Double tax = 0.12;
         ticket.setTicketNumber(UUID.randomUUID().toString());
 
         List<TicketLineItems> ticketLineItems = ticketRequest.getTicketLineItemsDtoList()
@@ -66,8 +66,8 @@ public class TicketService {
                             .retrieve()
                             .bodyToMono(BetToTicketResponse[].class)
                             .block();
-
             List<BetToTicketResponse> withoutNullResponseList= new ArrayList<>();
+            assert responseArray != null;
             for (BetToTicketResponse betToTicketResponse: responseArray) {
                 if (betToTicketResponse != null) {
                     withoutNullResponseList.add(betToTicketResponse);
@@ -79,11 +79,13 @@ public class TicketService {
                 overall *= response.getRate();
             }
             ticket.setOverall(overall);
+            ticket.setTotalStake(ticketRequest.getTotalStake());
+            ticket.setTotalWin(overall * ticketRequest.getTotalStake() * (1 - tax));
 
-
-            if (responseArray != null && withoutNullResponseList.size() == idsWithoutDuplicates.size()) {
+            if (withoutNullResponseList.size() == idsWithoutDuplicates.size()) {
                 ticketRepository.save(ticket);
-                kafkaTemplate.send("notificationTopic", new TicketPlaceEvent(ticket.getTicketNumber()));
+                kafkaTemplate.send("notificationTopic",
+                        new TicketPlaceEvent(ticket.getTicketNumber(), ticket.getTotalStake(), ticket.getTotalWin()));
                 log.info("send - {}", ticket.getTicketNumber());
                 return "Ticket accepted.";
             } else {
