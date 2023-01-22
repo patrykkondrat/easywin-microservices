@@ -19,46 +19,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class WalletServiceApplicationTests {
 
-	@Autowired
-	private MockMvc mockMvc;
-
-	@Autowired
-	ObjectMapper objectMapper;
-
-	@Autowired
-	private WalletRepository walletRepository;
-
-
-
-//	@Test
+	@Test
 	void contextLoads() {
 	}
 
-//	@Test
-	void getBalance() throws Exception {
-		WalletRequest walletRequest = getWalletRequest();
-
-		String requestBody = objectMapper.writeValueAsString(walletRequest);
-
-		mockMvc.perform(MockMvcRequestBuilders.post("/api/wallet")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(requestBody))
-				.andExpect(status().isOk())
-				.andExpect((ResultMatcher) content().string("{\"id\":1,\"balance\":100.0}"));
-	}
-
-//	@Test
-	void increaseBallance() throws Exception {
-		String walletString = objectMapper.writeValueAsString(getWalletRequest());
-		mockMvc.perform(MockMvcRequestBuilders.post("/api/wallet/-100.0")
-						.param("_id", "1"))
-				.andExpect(status().isOk());
-	}
-
-	private WalletRequest getWalletRequest() {
-		return WalletRequest.builder()
-				._id("1")
-				.build();
-	}
 
 }

@@ -19,7 +19,7 @@ public class WalletController {
 
     private final WalletService walletService;
 
-    @GetMapping
+    @GetMapping("/id")
     @ResponseStatus(HttpStatus.OK)
     public Optional<Wallet> getIdBallance(@RequestBody WalletRequest walletRequest) {
         return walletService.getBalanceById(walletRequest);
@@ -34,9 +34,9 @@ public class WalletController {
 
     @PostMapping()
     @ResponseStatus(HttpStatus.OK)
-    public void increaseBalance(@RequestBody WalletRequest walletRequest, @RequestParam("value") Double value) {
+    public void increaseBalance(@RequestBody WalletRequest walletRequest, @RequestParam("value") String value) {
         walletService.changeBalance(walletRequest, value);
-        if (value >= 0) {
+        if (Double.parseDouble(value) >= 0) {
             log.info("Account " + walletRequest.get_id() + " increase.");
         } else {
             log.info("Account " + walletRequest.get_id() + " decrease.");
