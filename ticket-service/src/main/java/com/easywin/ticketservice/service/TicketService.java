@@ -66,7 +66,7 @@ public class TicketService {
                             .retrieve()
                             .bodyToMono(BetToTicketResponse[].class)
                             .block();
-            List<BetToTicketResponse> withoutNullResponseList= new ArrayList<>();
+            List<BetToTicketResponse> withoutNullResponseList = new ArrayList<>();
             assert responseArray != null;
             for (BetToTicketResponse betToTicketResponse: responseArray) {
                 if (betToTicketResponse != null) {
@@ -74,10 +74,24 @@ public class TicketService {
                 }
             }
 
+            List<BetToTicketResponse> sortedResponseFromBetService = withoutNullResponseList.stream().sorted(Comparator.comparing(BetToTicketResponse::get_id)).toList();
+            List<TicketLineItems> sortedTicketRequest = ticketLineItems.stream().sorted(Comparator.comparing(TicketLineItems::getBetId)).toList();
+
+            for (int i = 0; i < withoutNullResponseList.size(); i++) {
+                if (!isValidBetRequest(sortedTicketRequest.get(i), sortedResponseFromBetService.get(i))) {
+                    throw new IllegalArgumentException("Invalid request.");
+                }
+            }
+
+            log.info("{}", sortedResponseFromBetService);
+            log.info("{}", sortedTicketRequest);
+
             Double overall = 1.00;
             for (TicketLineItems response: ticketLineItems) {
                 overall *= response.getRate();
             }
+
+
             ticket.setOverall(overall);
             ticket.setTotalStake(ticketRequest.getTotalStake());
             ticket.setTotalWin(overall * ticketRequest.getTotalStake() * (1 - tax));
@@ -95,6 +109,21 @@ public class TicketService {
             betServiceLookup.flush();
         }
     }
+
+
+    private boolean isValidBetRequest(TicketLineItems ticketLineItems, BetToTicketResponse response) {
+        if (ticketLineItems.getBetId().equals(response.get_id())) {
+            if (ticketLineItems.getChoice().equals(response.getHostname())
+                    && ticketLineItems.getRate().toString().equals(response.getHostRate())) {
+                return true;
+            } else if (ticketLineItems.getChoice().equals(response.getGuestname())
+                    && ticketLineItems.getRate().toString().equals(response.getGuestRate())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     private TicketLineItems mapToDto(TicketLineItemsDto ticketLineItemsDto) {
         TicketLineItems ticketLineItems = new TicketLineItems();

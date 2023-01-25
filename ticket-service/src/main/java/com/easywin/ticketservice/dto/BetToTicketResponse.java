@@ -8,6 +8,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
+@Getter
 public class BetToTicketResponse {
     private String _id;
     private String hostname;
