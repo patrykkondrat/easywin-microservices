@@ -1,15 +1,13 @@
 package com.easywin.ticketservice.dto;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Getter
 public class TicketLineItemsDto {
     private Long _id;
     private String betId;
