@@ -15,7 +15,7 @@ public class EmailSender {
     public void sendSimpleMessage(String to, String subject, String text) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom("patryk.kondrat@wp.pl");
+            message.setFrom("");
             message.setTo(to);
             message.setSubject(subject);
             message.setText(text);

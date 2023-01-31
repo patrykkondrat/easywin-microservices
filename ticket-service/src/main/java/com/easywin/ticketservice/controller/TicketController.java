@@ -26,6 +26,7 @@ public class TicketController {
     @TimeLimiter(name = "bet")
     @Retry(name = "bet")
     public CompletableFuture<String> placeTicket(@RequestBody TicketRequest ticketRequest) {
+        log.info("placeTicket called with {}", ticketRequest);
         return CompletableFuture.supplyAsync(() -> ticketService.placeTicket(ticketRequest));
     }
 
