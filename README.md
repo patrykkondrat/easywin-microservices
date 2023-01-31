@@ -15,6 +15,9 @@ Microservice app for betting.
   * registration of services
   * save the previous state when server is down
   * load balance send request to router (`discovery server`) and forwards request to avaiable service instance 
+* notification service
+  * communicate with promo ticket service (ticket placement)
+  * email sender
 * api gateway 
   * "unification path" for all services, 
   * connecting https to api gateway, when other services communicate by http
@@ -32,8 +35,6 @@ Microservice app for betting.
 * payment service
   * will communicate with wallet
   * use only by client-bank-server side, wallet is another case
-* notification service
-  * communicate with promo (send promo materials), auth service (registration confirmation), and ticket service (ticket placement)
 
 
 -> Mini Frontend? \

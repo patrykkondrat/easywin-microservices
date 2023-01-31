@@ -23,7 +23,6 @@ import java.util.*;
 @Transactional
 @Slf4j
 public class TicketService {
-
     private final TicketRepository ticketRepository;
     private final WebClient.Builder webClientBuilder;
     private final Tracer tracer;
@@ -95,7 +94,7 @@ public class TicketService {
 
             if (withoutNullResponseList.size() == idsWithoutDuplicates.size()) {
                 ticketRepository.save(ticket);
-                kafkaTemplate.send("notificationTopic",
+                kafkaTemplate.send("ticketTopic",
                         new TicketPlaceEvent(ticket.getTicketNumber(), ticket.getTotalStake(), ticket.getTotalWin()));
                 log.info("send - {}", ticket.getTicketNumber());
                 return "Ticket accepted.";
