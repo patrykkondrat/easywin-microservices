@@ -2,6 +2,7 @@
 version: '3'
 volumes:
   postgres-ticket:
+  postgres-promo:
   postgres-wallet:
   prometheus:
   grafana:
@@ -26,6 +27,22 @@ services:
     command: -p 5431
     restart: always
 
+  # PROMO POSTGRES
+  postgres-promo:
+    container_name: postgres-promo
+    image: postgres
+    environment:
+      POSTGRES_DB: promo_service
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      PGDATA: /data/postgres
+    volumes:
+      - ./postgres-promo:/var/lib/postgres/data
+    ports:
+      - "5433:5433"
+    command: -p 5433
+    restart: always
+
   # WALLET POSTGRES
   postgres-wallet:
     container_name: postgres-wallet
@@ -48,9 +65,9 @@ services:
     image: mongo:4.4.14-rc0-focal
     restart: always
     ports:
-      - "27017:27017"
+      - "27018:27018"
     expose:
-      - "27017"
+      - "27018"
     volumes:
       - ./mongo-data:/data/db
 
@@ -212,6 +229,18 @@ services:
       - zipkin
       - discovery-server
       - api-gateway
+
+  # PROMOSERVICE
+  promo-service:
+      container_name: promoservice
+      image: dr34mer99/promo-service:latest
+      environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      depends_on:
+      - zipkin
+      - discovery-server
+      - api-gateway
+      - broker
 
   prometheus:
     image: prom/prometheus:v2.37.2
