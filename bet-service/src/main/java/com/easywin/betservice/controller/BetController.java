@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+@CrossOrigin(origins = "*") // TODO "only for writing test frontend"
 @RestController
 @RequestMapping("/api/bet")
 @RequiredArgsConstructor
@@ -32,9 +34,21 @@ public class BetController {
         return betService.getBetById(Id);
     }
 
+    @GetMapping("/discipline")
+    @ResponseStatus(HttpStatus.OK)
+    public Set<String> getBetByDiscipline() {
+        return betService.getDisciplines();
+    }
+
+    @GetMapping("/discipline/{discipline}")
+    @ResponseStatus(HttpStatus.OK)
+    public List<BetResponse> getBetByDiscipline(@PathVariable("discipline") String discipline) {
+        return betService.getBetByDiscipline(discipline);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public void createBet(@RequestBody BetRequest betRequest){
+    public void createBet(@RequestBody BetRequest betRequest) {
         betService.createBet(betRequest);
     }
 
