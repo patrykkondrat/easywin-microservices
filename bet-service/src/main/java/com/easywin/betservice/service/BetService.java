@@ -20,7 +20,7 @@ public class BetService {
 
     private final BetRepository betRepository;
 
-    public void createBet(BetRequest betRequest){
+    public void createBet(BetRequest betRequest) {
         Bet bet = Bet.builder()
                 ._id(UUID.randomUUID().toString())
                 .description(betRequest.getDescription())
@@ -36,7 +36,10 @@ public class BetService {
 
     }
 
-    public void deleteBet(String _id){
+    public void deleteBet(String _id) {
+        if (!betRepository.existsById(_id)) {
+            throw new RuntimeException("Bet with id " + _id + " not found");
+        }
         betRepository.deleteById(_id);
         log.info("Bet " + _id + " deleted");
     }
@@ -46,8 +49,8 @@ public class BetService {
         return bets.stream().map(this::mapToBetResponse).toList();
     }
 
-    public Optional<BetResponse> getBetById(String id) {
-        return betRepository.findById(id).map(this::mapToBetResponse);
+    public BetResponse getBetById(String id) {
+        return betRepository.findById(id).map(this::mapToBetResponse).orElse(null);
     }
 
     private BetResponse mapToBetResponse(Bet bet) {
@@ -63,37 +66,34 @@ public class BetService {
                 .build();
     }
 
-    public Set<String> getDisciplines() {
-        List<Bet> bets = betRepository.findAll();
-        return bets.stream().map(Bet::getDiscipline).collect(Collectors.toSet());
-    }
+
 
     @Transactional(readOnly = true)
     public List<BetToTicketResponse> isBetInBets(List<String> _id) {
         Set<String> idSet = new HashSet<>(_id);
-        List<Optional<Bet>> listOfBets = idSet.stream().map(betRepository::findById).toList();
+        List<Bet> listOfBets = idSet.stream().map(betRepository::findById)
+                .filter(Optional::isPresent).map(Optional::get).toList();
         return listOfBets.stream()
-                .map(bet -> {
-                    if (bet.isPresent()) {
-                        return BetToTicketResponse.builder()
-                                ._id(bet.orElseThrow().get_id())
-                                .hostRate(bet.orElseThrow().getHostRate())
-                                .guestRate(bet.orElseThrow().getGuestRate())
-                                .hostname(bet.orElseThrow().getHostname())
-                                .guestname(bet.orElseThrow().getGuestname())
-                                .build();
-                    } else {
-                        return null;
-                    }
-                })
-                .toList();
+                .map(bet -> BetToTicketResponse.builder()
+                        ._id(bet.get_id())
+                        .hostRate(bet.getHostRate())
+                        .guestRate(bet.getGuestRate())
+                        .hostname(bet.getHostname())
+                        .guestname(bet.getGuestname())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    public Set<String> getDisciplines() {
+        // TODO change func in Repository to select unique values from Mongo
+        List<Bet> bets = betRepository.findAll();
+        return betRepository.findAll().stream().map(Bet::getDiscipline).collect(Collectors.toSet());
     }
 
     public List<BetResponse> getBetByDiscipline(String discipline) {
-        if (this.getDisciplines().contains(discipline)) {
-            return null;
-        }
-        List<Bet> bets = betRepository.findAllByDiscipline(discipline);
-        return bets.stream().map(this::mapToBetResponse).toList();
+//        if (this.getDisciplines().contains(discipline)) {
+//            return null;
+//        }
+        return betRepository.findBetByDiscipline(discipline).stream().map(this::mapToBetResponse).toList();
     }
 }

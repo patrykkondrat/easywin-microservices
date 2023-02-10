@@ -10,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 @CrossOrigin(origins = "*") // TODO "only for writing test frontend"
@@ -30,8 +29,8 @@ public class BetController {
 
     @GetMapping("/id")
     @ResponseStatus(HttpStatus.OK)
-    public Optional<BetResponse> getBetById(@RequestParam("Id") String Id) {
-        return betService.getBetById(Id);
+    public BetResponse getBetById(@RequestParam("id") String id) {
+        return betService.getBetById(id);
     }
 
     @GetMapping("/discipline")
@@ -43,6 +42,7 @@ public class BetController {
     @GetMapping("/discipline/{discipline}")
     @ResponseStatus(HttpStatus.OK)
     public List<BetResponse> getBetByDiscipline(@PathVariable("discipline") String discipline) {
+        log.info("discipline: " + discipline);
         return betService.getBetByDiscipline(discipline);
     }
 
@@ -54,8 +54,8 @@ public class BetController {
 
     @DeleteMapping("/id")
     @ResponseStatus(HttpStatus.OK)
-    public void deleteBet(@RequestParam("Id") String Id){
-        betService.deleteBet(Id);
+    public void deleteBet(@RequestParam("id") String id){
+        betService.deleteBet(id);
     }
 
     @GetMapping("/isbet")
