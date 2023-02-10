@@ -14,4 +14,5 @@ import java.util.List;
 public class TicketRequest {
     private List<TicketLineItemsDto> ticketLineItemsDtoList;
     private Double totalStake;
+    private String walletId;
 }

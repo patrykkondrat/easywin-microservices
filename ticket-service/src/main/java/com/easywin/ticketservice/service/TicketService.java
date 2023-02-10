@@ -5,6 +5,7 @@ import brave.Tracer;
 import com.easywin.ticketservice.dto.BetToTicketResponse;
 import com.easywin.ticketservice.dto.TicketLineItemsDto;
 import com.easywin.ticketservice.dto.TicketRequest;
+import com.easywin.ticketservice.dto.WalletDecrease;
 import com.easywin.ticketservice.event.TicketPlaceEvent;
 import com.easywin.ticketservice.model.Ticket;
 import com.easywin.ticketservice.model.TicketLineItems;
@@ -12,6 +13,7 @@ import com.easywin.ticketservice.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -65,6 +67,7 @@ public class TicketService {
                             .retrieve()
                             .bodyToMono(BetToTicketResponse[].class)
                             .block();
+
             List<BetToTicketResponse> withoutNullResponseList = new ArrayList<>();
             assert responseArray != null;
             for (BetToTicketResponse betToTicketResponse: responseArray) {
@@ -92,7 +95,21 @@ public class TicketService {
             ticket.setTotalStake(ticketRequest.getTotalStake());
             ticket.setTotalWin(overall * ticketRequest.getTotalStake() * (1 - tax));
 
+
             if (withoutNullResponseList.size() == idsWithoutDuplicates.size()) {
+                WalletDecrease walletDecrease = new WalletDecrease(ticketRequest.getWalletId(), ticketRequest.getTotalStake());
+                webClientBuilder.build().post()
+                        .uri("http://wallet-service/api/wallet",
+                                uriBuilder ->
+                                        uriBuilder.queryParam("id", walletDecrease.getId())
+                                                .queryParam("value", walletDecrease.getDecreaseValue())
+                                                .build())
+                        .bodyValue(walletDecrease)
+                        .retrieve()
+                        .bodyToMono(WalletDecrease.class)
+                        .block();
+
+
                 ticketRepository.save(ticket);
                 kafkaTemplate.send("ticketTopic",
                         new TicketPlaceEvent(ticket.getTicketNumber(), ticket.getTotalStake(), ticket.getTotalWin()));
