@@ -34,12 +34,12 @@ public class WalletController {
 
     @PostMapping()
     @ResponseStatus(HttpStatus.OK)
-    public void increaseBalance(@RequestBody WalletRequest walletRequest, @RequestParam("value") String value) {
-        walletService.changeBalance(walletRequest, value);
+    public void increaseBalance(@RequestParam("id") String id, @RequestParam("value") String value) {
+        walletService.changeBalance(id, value);
         if (Double.parseDouble(value) >= 0) {
-            log.info("Account " + walletRequest.get_id() + " increase.");
+            log.info("Account " + id + " increase.");
         } else {
-            log.info("Account " + walletRequest.get_id() + " decrease.");
+            log.info("Account " + id + " decrease.");
         }
     }
 }

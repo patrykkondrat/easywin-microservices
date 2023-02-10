@@ -26,13 +26,13 @@ public class WalletService {
         return walletRepository.findById(walletRequest.get_id());
     }
 
-    public void changeBalance(WalletRequest walletRequest, String value) {
-        Optional<Wallet> wallet = walletRepository.findById(walletRequest.get_id()).map(this::mapToWallet);
-        if (wallet.get().getBalance() + Double.parseDouble(value) < 0.00) {
+    public void changeBalance(String id, String value) {
+        Wallet wallet = walletRepository.findById(id).map(this::mapToWallet).orElseThrow();
+        if (wallet.getBalance() + Double.parseDouble(value) < 0.00) {
             throw new IllegalArgumentException("Can't decrease over 0.00");
         }
-        wallet.get().setBalance(wallet.get().getBalance() + Double.parseDouble(value));
-        walletRepository.save(wallet.get());
+        wallet.setBalance(wallet.getBalance() + Double.parseDouble(value));
+        walletRepository.save(wallet);
     }
 
     private Wallet mapToWallet(Wallet wallet) {
