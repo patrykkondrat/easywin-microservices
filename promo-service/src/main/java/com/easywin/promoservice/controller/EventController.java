@@ -37,7 +37,6 @@ public class EventController {
         eventService.publishEvents(eventId);
     }
 
-
     @PutMapping
     public void updateEvent(@RequestBody EventRequest eventRequest, @RequestParam String id) {
         eventService.updateEvent(eventRequest, id);

@@ -48,7 +48,6 @@ public class EventService {
         event.setEndTime(eventRequest.getEndTime());
         event.setLocation(eventRequest.getLocation());
         event.setOrganizer(eventRequest.getOrganizer());
-        event.setOrganizerEmail(eventRequest.getOrganizerEmail());
         event.setStatus(EventStatus.UNPUBLISHED);
         // set other fields
         eventRepository.save(event);
@@ -64,7 +63,6 @@ public class EventService {
         event.setEndTime(eventRequest.getEndTime());
         event.setLocation(eventRequest.getLocation());
         event.setOrganizer(eventRequest.getOrganizer());
-        event.setOrganizerEmail(eventRequest.getOrganizerEmail());
         eventRepository.save(event);
     }
 
@@ -74,8 +72,7 @@ public class EventService {
             event.setStatus(EventStatus.PUBLISHED);
             kafkaTemplate.send("promoTopic", new PromoEvent(event.getId(), event.getName(), event.getDescription(),
                             event.getStartDate(), event.getEndDate(), event.getStartTime(),
-                            event.getEndTime(), event.getLocation(), event.getOrganizer(),
-                            event.getOrganizerEmail()));
+                            event.getEndTime(), event.getLocation(), event.getOrganizer()));
             log.info("Published event - {}", event.getName());
             eventRepository.save(event);
         });
@@ -94,7 +91,6 @@ public class EventService {
                 .endTime(event.getEndTime())
                 .location(event.getLocation())
                 .organizer(event.getOrganizer())
-                .organizerEmail(event.getOrganizerEmail())
                 .build();
     }
 }
