@@ -30,5 +30,4 @@ public class MailConfig {
         emailTemplateResolver.setCacheable(false);
         return emailTemplateResolver;
     }
-
 }

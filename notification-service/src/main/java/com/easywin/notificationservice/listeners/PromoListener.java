@@ -29,10 +29,16 @@ public class PromoListener {
 
         Context ctx = new Context();
         ctx.setVariable("name", promo.getName());
-        ctx.setVariable("organizator", promo.getOrganizer());
+        ctx.setVariable("organizer", promo.getOrganizer());
+        ctx.setVariable("description", promo.getDescription());
+        ctx.setVariable("startDate", promo.getStartDate());
+        ctx.setVariable("endDate", promo.getEndDate());
+        ctx.setVariable("startTime", promo.getStartTime());
+        ctx.setVariable("endTime", promo.getEndTime());
+        ctx.setVariable("location", promo.getLocation());
 
         final String body = templateEngine.process("ticketmail.html", ctx);
 
-        emailSender.sendMail("dr34mer00@gmail.com", "Promo Event", body);
+        emailSender.sendMail("dr34mer00@gmail.com", "Promo Event", body); // TODO: change to user email
     }
 }

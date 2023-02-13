@@ -17,5 +17,4 @@ public class PromoEvent {
     private String endTime;
     private String location;
     private String organizer;
-    private String organizerEmail;
 }
