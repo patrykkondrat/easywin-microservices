@@ -37,8 +37,8 @@ public class PromoListener {
         ctx.setVariable("endTime", promo.getEndTime());
         ctx.setVariable("location", promo.getLocation());
 
-        final String body = templateEngine.process("ticketmail.html", ctx);
+        final String body = templateEngine.process("promomail.html", ctx);
 
-        emailSender.sendMail("dr34mer00@gmail.com", "Promo Event", body); // TODO: change to user email
+        emailSender.sendMail("dr34mer00@gmail.com", "Promo Event", body); // TODO: change to user email (maybe should be all users or group of users)
     }
 }

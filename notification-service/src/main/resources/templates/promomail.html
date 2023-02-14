@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="UTF-8">
+    <title th:remove="all">Your Chance!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500&display=swap');
+        body {
+            background-color: #BF9E75;
+
+            align-items: center;
+            font-family: 'Quicksand', sans-serif;
+            margin: auto;
+        }
+        #context-container {
+            background-color: #174FBF;
+            border-radius: 10px;
+            max-width: 600px;
+            padding: 10px;
+            margin: 10px;
+        }
+        #description{
+            background-color: #0597F2;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: justify-all;
+            padding: 10px;
+        }
+        #date, #location, #organizer {
+            background-color: #0597F2;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: bold;
+            padding: 10px;
+        }
+        .time {
+            background-color: #BF9E75;
+        }
+    </style>
+</head>
+<body>
+<div id="context-container">
+    <div id="hello-container">
+        <h1 id="hello">Ciao!</h1>
+    </div>
+    <div id="description" th:text="${description}">
+        Opis
+    </div>
+    <div id="date">
+        Kiedy?: <span th:text="${startDate}"> </span><span class="time" th:text="${startTime}"></span>-<span th:text="${endDate}"> </span><span class="time" th:text="${endTime}"></span>
+    </div>
+    <div id="location">
+        Gdzie?: <span th:text="${location}"></span>
+    </div>
+    <div id="organizer">
+        Organizator: <span th:text="${organizer}"></span>
+    </div>
+</div>
+</body>
+</html>
