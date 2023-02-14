@@ -13,7 +13,6 @@ import com.easywin.ticketservice.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -70,7 +69,7 @@ public class TicketService {
 
             List<BetToTicketResponse> withoutNullResponseList = new ArrayList<>();
             assert responseArray != null;
-            for (BetToTicketResponse betToTicketResponse: responseArray) {
+            for (BetToTicketResponse betToTicketResponse : responseArray) {
                 if (betToTicketResponse != null) {
                     withoutNullResponseList.add(betToTicketResponse);
                 }
@@ -102,7 +101,7 @@ public class TicketService {
                         .uri("http://wallet-service/api/wallet",
                                 uriBuilder ->
                                         uriBuilder.queryParam("id", walletDecrease.getId())
-                                                .queryParam("value", walletDecrease.getDecreaseValue())
+                                                .queryParam("value",-walletDecrease.getDecreaseValue())
                                                 .build())
                         .bodyValue(walletDecrease)
                         .retrieve()
@@ -112,7 +111,7 @@ public class TicketService {
 
                 ticketRepository.save(ticket);
                 kafkaTemplate.send("ticketTopic",
-                        new TicketPlaceEvent(ticket.getTicketNumber(), ticket.getTotalStake(), ticket.getTotalWin()));
+                        new TicketPlaceEvent(ticket.getTicketNumber(), ticket.getTicketLineItemsList(), ticket.getTotalStake(), ticket.getTotalWin()));
                 log.info("send - {}", ticket.getTicketNumber());
                 return "Ticket accepted.";
             } else {
