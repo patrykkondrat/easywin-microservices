@@ -3,6 +3,7 @@ package com.easywin.promoservice.controller;
 import com.easywin.promoservice.dto.EventRequest;
 import com.easywin.promoservice.dto.EventResponse;
 import com.easywin.promoservice.service.EventService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,6 +14,7 @@ public class EventController {
 
     private final EventService eventService;
 
+    @Autowired
     public EventController(EventService eventService) {
         this.eventService = eventService;
     }
