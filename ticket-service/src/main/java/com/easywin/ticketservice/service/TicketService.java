@@ -29,6 +29,7 @@ public class TicketService {
     private final Tracer tracer;
     private final KafkaTemplate<String, TicketPlaceEvent> kafkaTemplate;
 
+    @Transactional
     public String placeTicket(TicketRequest ticketRequest) {
         Ticket ticket = new Ticket();
         Double tax = 0.12;
