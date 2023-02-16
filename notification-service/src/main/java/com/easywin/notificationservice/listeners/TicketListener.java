@@ -27,8 +27,8 @@ public class TicketListener {
 
         Context ctx = new Context();
         ctx.setVariable("ticket", ticketPlaceEvent.getTicketLineItemsList());
-        ctx.setVariable("ticket-number", ticketPlaceEvent.getTicketNumber());
-        ctx.setVariable("total-stake", ticketPlaceEvent.getTotalStake());
+        ctx.setVariable("ticketnumber", ticketPlaceEvent.getTicketNumber());
+        ctx.setVariable("totalstake", ticketPlaceEvent.getTotalStake());
         ctx.setVariable("winning", ticketPlaceEvent.getTotalWin());
 
         String body = templateEngine.process("ticketmail.html", ctx);
