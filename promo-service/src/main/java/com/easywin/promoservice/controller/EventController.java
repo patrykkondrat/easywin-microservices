@@ -29,7 +29,7 @@ public class EventController {
         return eventService.getEvent(id);
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public void createEvent(@RequestBody EventRequest eventRequest) {
         eventService.createEvent(eventRequest);
     }
@@ -39,12 +39,12 @@ public class EventController {
         eventService.publishEvents(eventId);
     }
 
-    @PutMapping
+    @PutMapping("/update")
     public void updateEvent(@RequestBody EventRequest eventRequest, @RequestParam String id) {
         eventService.updateEvent(eventRequest, id);
     }
 
-    @DeleteMapping
+    @DeleteMapping("/delete")
     public void deleteEvent(@RequestParam String id) {
         eventService.deleteEvent(id);
     }

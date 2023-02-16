@@ -46,13 +46,13 @@ public class BetController {
         return betService.getBetByDiscipline(discipline);
     }
 
-    @PostMapping
+    @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public void createBet(@RequestBody BetRequest betRequest) {
         betService.createBet(betRequest);
     }
 
-    @DeleteMapping("/id")
+    @DeleteMapping("/delete")
     @ResponseStatus(HttpStatus.OK)
     public void deleteBet(@RequestParam("id") String id){
         betService.deleteBet(id);
