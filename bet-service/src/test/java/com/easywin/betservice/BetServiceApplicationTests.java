@@ -20,9 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
-//@SpringBootTest
-//@Testcontainers
-//@AutoConfigureMockMvc
+@SpringBootTest
+@Testcontainers
+@AutoConfigureMockMvc
 class BetServiceApplicationTests {
 	@Container
 	static final MongoDBContainer mongoDBContainer = new MongoDBContainer("mongo:4.4.2");
@@ -37,33 +37,34 @@ class BetServiceApplicationTests {
 		dynamicPropertyRegistry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
 	}
 
-//	@Test
+	@Test
 	void getAllBets() throws Exception{
 		mockMvc.perform(MockMvcRequestBuilders.get("/api/bet"))
 				.andExpect(status().isOk());
 	}
 
-//	@Test
+	@Test
 	void getBetById() throws Exception {
-		mockMvc.perform(MockMvcRequestBuilders.get("/api/bet/id"))
+		mockMvc.perform(MockMvcRequestBuilders.get("/api/bet/id").param("id", "1"))
 				.andExpect(status().isOk());
+		System.out.println(MockMvcRequestBuilders.get("/api/bet/id").param("id", "1"));
 	}
 
-//	@Test
+	@Test
 	void createBet() throws Exception {
 		BetRequest betRequest = getBetRequest();
 		String betString = objectMapper.writeValueAsString(betRequest);
-		mockMvc.perform(MockMvcRequestBuilders.post("/api/bet")
+		mockMvc.perform(MockMvcRequestBuilders.post("/api/bet/create")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content(betString))
 						.andExpect(status().isCreated());
 		assertEquals(betRepository.findAll().size(), 1);
 	}
 
-//	@Test
+	@Test
 	void deleteBet() throws Exception {
-		mockMvc.perform(MockMvcRequestBuilders.delete("/api/bet/id"))
-				.andExpect(status().isOk());
+		mockMvc.perform(MockMvcRequestBuilders.delete("/api/bet/delete").param("id", ""))
+				.andExpect(status().isBadRequest());
 		assertEquals(betRepository.findAll().size(), 0);
 	}
 
