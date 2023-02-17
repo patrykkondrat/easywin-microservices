@@ -44,11 +44,11 @@ class WalletControllerTest {
     @Test
     void increaseBalance() throws Exception {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("id", "123");
         params.add("value", "100.00");
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/wallet")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(getWalletRequest()))
                         .params(params))
                         .andExpect(status().isOk());
     }

@@ -6,7 +6,6 @@ import com.easywin.walletservice.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -22,14 +21,14 @@ public class WalletService {
         return wallet;
     }
 
-    public Optional<Wallet> getBalanceById(WalletRequest walletRequest) {
-        return walletRepository.findById(walletRequest.get_id());
+    public Wallet getBalanceById(WalletRequest walletRequest) {
+        return walletRepository.findById(walletRequest.get_id()).orElse(null);
     }
 
     public void changeBalance(String id, String value) {
         Wallet wallet = walletRepository.findById(id).map(this::mapToWallet).orElseThrow();
         if (wallet.getBalance() + Double.parseDouble(value) < 0.00) {
-            throw new IllegalArgumentException("Can't decrease over 0.00");
+            throw new IllegalArgumentException("Can't decrease under 0.00");
         }
         wallet.setBalance(wallet.getBalance() + Double.parseDouble(value));
         walletRepository.save(wallet);

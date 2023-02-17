@@ -8,9 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import javax.websocket.server.PathParam;
-import java.util.Optional;
-
 @RestController
 @RequestMapping("/api/wallet")
 @RequiredArgsConstructor
@@ -21,7 +18,7 @@ public class WalletController {
 
     @GetMapping("/id")
     @ResponseStatus(HttpStatus.OK)
-    public Optional<Wallet> getIdBallance(@RequestBody WalletRequest walletRequest) {
+    public Wallet getIdBallance(@RequestBody WalletRequest walletRequest) {
         return walletService.getBalanceById(walletRequest);
     }
 
