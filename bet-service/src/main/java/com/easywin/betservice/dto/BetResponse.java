@@ -1,5 +1,6 @@
 package com.easywin.betservice.dto;
 
+import com.easywin.betservice.model.BetStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,4 +19,5 @@ public class BetResponse {
     private String guestname;
     private String date;
     private String discipline;
+    private BetStatus betStatus;
 }
