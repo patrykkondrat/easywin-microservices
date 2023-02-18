@@ -4,6 +4,7 @@ import com.easywin.betservice.dto.BetRequest;
 import com.easywin.betservice.dto.BetResponse;
 import com.easywin.betservice.dto.BetToTicketResponse;
 import com.easywin.betservice.model.Bet;
+import com.easywin.betservice.model.BetStatus;
 import com.easywin.betservice.repository.BetRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class BetService {
                 .hostname(betRequest.getHostname())
                 .date(betRequest.getDate())
                 .discipline(betRequest.getDiscipline())
+                .betStatus(BetStatus.PENDING)
                 .build();
         log.info("Bet " + bet.toString() + " saved");
         betRepository.save(bet);
@@ -63,6 +65,7 @@ public class BetService {
                 .hostname(bet.getHostname())
                 .date(bet.getDate())
                 .discipline(bet.getDiscipline())
+                .betStatus(bet.getBetStatus())
                 .build();
     }
 
@@ -80,6 +83,7 @@ public class BetService {
                         .guestRate(bet.getGuestRate())
                         .hostname(bet.getHostname())
                         .guestname(bet.getGuestname())
+                        .betStatus(bet.getBetStatus())
                         .build())
                 .collect(Collectors.toList());
     }
@@ -95,5 +99,11 @@ public class BetService {
 //            return null;
 //        }
         return betRepository.findBetByDiscipline(discipline).stream().map(this::mapToBetResponse).toList();
+    }
+
+    public void changeBetStatus(String id, BetStatus betStatus) {
+        Bet bet = betRepository.findById(id).orElseThrow(() -> new RuntimeException("Bet with id " + id + " not found"));
+        bet.setBetStatus(betStatus);
+        betRepository.save(bet);
     }
 }
