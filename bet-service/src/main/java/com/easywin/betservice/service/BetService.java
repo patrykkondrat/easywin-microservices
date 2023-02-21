@@ -3,11 +3,13 @@ package com.easywin.betservice.service;
 import com.easywin.betservice.dto.BetRequest;
 import com.easywin.betservice.dto.BetResponse;
 import com.easywin.betservice.dto.BetToTicketResponse;
+import com.easywin.betservice.event.UpdateBetStatusInTicket;
 import com.easywin.betservice.model.Bet;
 import com.easywin.betservice.model.BetStatus;
 import com.easywin.betservice.repository.BetRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,8 @@ import java.util.stream.Collectors;
 public class BetService {
 
     private final BetRepository betRepository;
+
+    private final KafkaTemplate<String, UpdateBetStatusInTicket> kafkaTemplate;
 
     public void createBet(BetRequest betRequest) {
         Bet bet = Bet.builder()
@@ -101,9 +105,11 @@ public class BetService {
         return betRepository.findBetByDiscipline(discipline).stream().map(this::mapToBetResponse).toList();
     }
 
+
     public void changeBetStatus(String id, BetStatus betStatus) {
         Bet bet = betRepository.findById(id).orElseThrow(() -> new RuntimeException("Bet with id " + id + " not found"));
         bet.setBetStatus(betStatus);
         betRepository.save(bet);
+        kafkaTemplate.send("betTopic", new UpdateBetStatusInTicket(bet.get_id(), bet.getBetStatus()));
     }
 }
