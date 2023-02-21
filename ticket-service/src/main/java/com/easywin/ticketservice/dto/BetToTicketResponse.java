@@ -1,5 +1,6 @@
 package com.easywin.ticketservice.dto;
 
+import com.easywin.ticketservice.model.BetStatus;
 import lombok.*;
 
 
@@ -15,4 +16,5 @@ public class BetToTicketResponse {
     private String guestname;
     private String hostRate;
     private String guestRate;
+    private BetStatus betStatus;
 }

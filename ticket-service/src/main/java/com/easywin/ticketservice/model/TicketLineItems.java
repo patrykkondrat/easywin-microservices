@@ -18,4 +18,6 @@ public class TicketLineItems {
     private String betId;
     private String choice;
     private Double rate;
+    @Enumerated(EnumType.STRING)
+    private BetStatus betStatus;
 }
