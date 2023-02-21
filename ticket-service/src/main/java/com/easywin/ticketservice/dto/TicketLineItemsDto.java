@@ -1,6 +1,7 @@
 package com.easywin.ticketservice.dto;
 
 
+import com.easywin.ticketservice.model.BetStatus;
 import lombok.*;
 
 @Data

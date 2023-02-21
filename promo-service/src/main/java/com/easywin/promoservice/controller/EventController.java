@@ -3,6 +3,7 @@ package com.easywin.promoservice.controller;
 import com.easywin.promoservice.dto.EventRequest;
 import com.easywin.promoservice.dto.EventResponse;
 import com.easywin.promoservice.service.EventService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,6 +14,7 @@ public class EventController {
 
     private final EventService eventService;
 
+    @Autowired
     public EventController(EventService eventService) {
         this.eventService = eventService;
     }
@@ -27,7 +29,7 @@ public class EventController {
         return eventService.getEvent(id);
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public void createEvent(@RequestBody EventRequest eventRequest) {
         eventService.createEvent(eventRequest);
     }
@@ -37,12 +39,12 @@ public class EventController {
         eventService.publishEvents(eventId);
     }
 
-    @PutMapping
+    @PutMapping("/update")
     public void updateEvent(@RequestBody EventRequest eventRequest, @RequestParam String id) {
         eventService.updateEvent(eventRequest, id);
     }
 
-    @DeleteMapping
+    @DeleteMapping("/delete")
     public void deleteEvent(@RequestParam String id) {
         eventService.deleteEvent(id);
     }

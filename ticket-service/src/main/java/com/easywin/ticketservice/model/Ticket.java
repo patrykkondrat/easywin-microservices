@@ -21,4 +21,6 @@ public class Ticket {
     private Double overall;
     private Double totalStake;
     private Double totalWin;
+    @Enumerated(EnumType.STRING)
+    private BillingStatus billingStatus;
 }

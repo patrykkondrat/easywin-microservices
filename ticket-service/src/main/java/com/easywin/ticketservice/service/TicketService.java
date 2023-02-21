@@ -2,16 +2,17 @@ package com.easywin.ticketservice.service;
 
 import brave.Span;
 import brave.Tracer;
-import com.easywin.ticketservice.dto.BetToTicketResponse;
-import com.easywin.ticketservice.dto.TicketLineItemsDto;
-import com.easywin.ticketservice.dto.TicketRequest;
-import com.easywin.ticketservice.dto.WalletDecrease;
+import com.easywin.ticketservice.dto.*;
 import com.easywin.ticketservice.event.TicketPlaceEvent;
+import com.easywin.ticketservice.event.UpdateBetStatusInTicket;
+import com.easywin.ticketservice.model.BetStatus;
+import com.easywin.ticketservice.model.BillingStatus;
 import com.easywin.ticketservice.model.Ticket;
 import com.easywin.ticketservice.model.TicketLineItems;
 import com.easywin.ticketservice.repository.TicketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ public class TicketService {
     private final Tracer tracer;
     private final KafkaTemplate<String, TicketPlaceEvent> kafkaTemplate;
 
+    @Transactional
     public String placeTicket(TicketRequest ticketRequest) {
         Ticket ticket = new Ticket();
         Double tax = 0.12;
@@ -70,7 +72,7 @@ public class TicketService {
             List<BetToTicketResponse> withoutNullResponseList = new ArrayList<>();
             assert responseArray != null;
             for (BetToTicketResponse betToTicketResponse : responseArray) {
-                if (betToTicketResponse != null) {
+                if (betToTicketResponse != null && betToTicketResponse.getBetStatus() == BetStatus.PENDING) {
                     withoutNullResponseList.add(betToTicketResponse);
                 }
             }
@@ -80,12 +82,14 @@ public class TicketService {
 
             for (int i = 0; i < withoutNullResponseList.size(); i++) {
                 if (!isValidBetRequest(sortedTicketRequest.get(i), sortedResponseFromBetService.get(i))) {
-                    throw new IllegalArgumentException("Invalid request.");
+                    throw new IllegalArgumentException("Bad bet in request.");
                 }
+                System.out.println(sortedTicketRequest.get(i));
+                System.out.println(sortedResponseFromBetService.get(i));
             }
 
             Double overall = 1.00;
-            for (TicketLineItems response: ticketLineItems) {
+            for (TicketLineItems response : ticketLineItems) {
                 overall *= response.getRate();
             }
 
@@ -93,6 +97,7 @@ public class TicketService {
             ticket.setOverall(overall);
             ticket.setTotalStake(ticketRequest.getTotalStake());
             ticket.setTotalWin(overall * ticketRequest.getTotalStake() * (1 - tax));
+            ticket.setBillingStatus(BillingStatus.PENDING);
 
 
             if (withoutNullResponseList.size() == idsWithoutDuplicates.size()) {
@@ -101,7 +106,7 @@ public class TicketService {
                         .uri("http://wallet-service/api/wallet",
                                 uriBuilder ->
                                         uriBuilder.queryParam("id", walletDecrease.getId())
-                                                .queryParam("value",-walletDecrease.getDecreaseValue())
+                                                .queryParam("value", -walletDecrease.getDecreaseValue())
                                                 .build())
                         .bodyValue(walletDecrease)
                         .retrieve()
@@ -136,12 +141,33 @@ public class TicketService {
         return false;
     }
 
-
     private TicketLineItems mapToDto(TicketLineItemsDto ticketLineItemsDto) {
         TicketLineItems ticketLineItems = new TicketLineItems();
         ticketLineItems.setBetId(ticketLineItemsDto.getBetId());
         ticketLineItems.setChoice(ticketLineItemsDto.getChoice());
         ticketLineItems.setRate(ticketLineItemsDto.getRate());
+        ticketLineItems.setBetStatus(BetStatus.PENDING);
         return ticketLineItems;
+    }
+
+    @KafkaListener(topics = "betTopic")
+    public void updateTickets(UpdateBetStatusInTicket status) {
+        List<Ticket> tickets = ticketRepository.findAllByTicketLineItemsList_BetIdAndBillingStatus(status.getId(), BillingStatus.PENDING);
+        for (Ticket ticket: tickets) {
+            boolean allBetsInTicketLineItemsResloved = true;
+            List<TicketLineItems> ticketLineItemsList = ticket.getTicketLineItemsList();
+            for (TicketLineItems bets: ticketLineItemsList) {
+                if (bets.getBetId().equals(status.getId())) {
+                    bets.setBetStatus(status.getBetStatus());
+                }
+                if (bets.getBetStatus().equals(BetStatus.PENDING)){
+                    allBetsInTicketLineItemsResloved = false;
+                }
+            }
+            if (allBetsInTicketLineItemsResloved){
+                ticket.setBillingStatus(BillingStatus.TO_PAY);
+            }
+            ticketRepository.save(ticket);
+        }
     }
 }

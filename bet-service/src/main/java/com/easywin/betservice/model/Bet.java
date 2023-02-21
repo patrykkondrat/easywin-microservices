@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+
 @Document(value = "bet")
 @AllArgsConstructor
 @NoArgsConstructor
@@ -20,6 +23,7 @@ public class Bet {
     private String guestRate;
     private String hostname;
     private String guestname;
+    @Enumerated(EnumType.STRING)
     private BetStatus betStatus;
     private String date;
     private String discipline;
