@@ -41,7 +41,6 @@ public class TicketService {
         ticket.setTicketNumber(UUID.randomUUID().toString());
 
         List<TicketLineItems> ticketLineItems =  mapToDtoList(ticketRequest);
-
         ticket.setTicketLineItemsList(ticketLineItems);
 
         Set<String> betsId = checkDuplicates(ticket);
@@ -52,15 +51,8 @@ public class TicketService {
 
             betServiceLookup.tag("call", "bet-service");
 
-            BetToTicketResponse[] responseArray =
-                    webClientBuilder.build().get()
-                            .uri("http://bet-service/api/bet/isbet",
-                                    uriBuilder ->
-                                            uriBuilder.queryParam("_id", betsId)
-                                                    .build())
-                            .retrieve()
-                            .bodyToMono(BetToTicketResponse[].class)
-                            .block();
+            BetToTicketResponse[] responseArray = getBetsFromBetService(betsId);
+
 
             List<BetToTicketResponse> withoutNullResponseList = new ArrayList<>();
             assert responseArray != null;
@@ -70,15 +62,20 @@ public class TicketService {
                 }
             }
 
-            List<BetToTicketResponse> sortedResponseFromBetService = withoutNullResponseList.stream().sorted(Comparator.comparing(BetToTicketResponse::get_id)).toList();
-            List<TicketLineItems> sortedTicketRequest = ticketLineItems.stream().sorted(Comparator.comparing(TicketLineItems::getBetId)).toList();
+            List<BetToTicketResponse> sortedResponseFromBetService =
+                    withoutNullResponseList.stream()
+                            .sorted(Comparator.comparing(BetToTicketResponse::get_id))
+                            .toList();
+            List<TicketLineItems> sortedTicketRequest =
+                    ticketLineItems.stream()
+                            .sorted(Comparator.comparing(TicketLineItems::getBetId))
+                            .toList();
+
 
             for (int i = 0; i < withoutNullResponseList.size(); i++) {
                 if (!isValidBetRequest(sortedTicketRequest.get(i), sortedResponseFromBetService.get(i))) {
                     throw new IllegalArgumentException("Bad bet in request.");
                 }
-                System.out.println(sortedTicketRequest.get(i));
-                System.out.println(sortedResponseFromBetService.get(i));
             }
 
             Double overall = 1.00;
@@ -94,30 +91,45 @@ public class TicketService {
 
 
             if (withoutNullResponseList.size() == betsId.size()) {
-                WalletDecrease walletDecrease = new WalletDecrease(ticketRequest.getWalletId(), ticketRequest.getTotalStake());
-                webClientBuilder.build().post()
-                        .uri("http://wallet-service/api/wallet",
-                                uriBuilder ->
-                                        uriBuilder.queryParam("id", walletDecrease.getId())
-                                                .queryParam("value", -walletDecrease.getDecreaseValue())
-                                                .build())
-                        .bodyValue(walletDecrease)
-                        .retrieve()
-                        .bodyToMono(WalletDecrease.class)
-                        .block();
-
+                walletReduction(ticketRequest);
 
                 ticketRepository.save(ticket);
                 kafkaTemplate.send("ticketTopic",
-                        new TicketPlaceEvent(ticket.getTicketNumber(), ticket.getTicketLineItemsList(), ticket.getTotalStake(), ticket.getTotalWin()));
-                log.info("send - {}", ticket.getTicketNumber());
+                        new TicketPlaceEvent(ticket.getTicketNumber(),
+                                ticket.getTicketLineItemsList(),
+                                ticket.getTotalStake(), ticket.getTotalWin()));
                 return "Ticket accepted.";
             } else {
-                throw new IllegalArgumentException("Bet isn't available");
+                throw new IllegalArgumentException("Invalid Ticket");
             }
         } finally {
             betServiceLookup.flush();
         }
+    }
+
+    private void walletReduction(TicketRequest ticketRequest) {
+        WalletDecrease walletDecrease = new WalletDecrease(ticketRequest.getWalletId(), ticketRequest.getTotalStake());
+        webClientBuilder.build().post()
+                .uri("http://wallet-service/api/wallet",
+                        uriBuilder ->
+                                uriBuilder.queryParam("id", walletDecrease.getId())
+                                        .queryParam("value", -walletDecrease.getDecreaseValue())
+                                        .build())
+                .bodyValue(walletDecrease)
+                .retrieve()
+                .bodyToMono(WalletDecrease.class)
+                .block();
+    }
+
+    private BetToTicketResponse[] getBetsFromBetService(Set<String> betsId) {
+        return webClientBuilder.build().get()
+                .uri("http://bet-service/api/bet/isbet",
+                        uriBuilder ->
+                                uriBuilder.queryParam("_id", betsId)
+                                        .build())
+                .retrieve()
+                .bodyToMono(BetToTicketResponse[].class)
+                .block();
     }
 
     private Set<String> checkDuplicates(Ticket ticket) {
