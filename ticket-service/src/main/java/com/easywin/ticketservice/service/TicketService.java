@@ -40,7 +40,7 @@ public class TicketService {
         double tax = 0.12;
         ticket.setTicketNumber(UUID.randomUUID().toString());
 
-        List<TicketLineItems> ticketLineItems =  mapToDtoList(ticketRequest);
+        List<TicketLineItems> ticketLineItems = mapToDtoList(ticketRequest);
         ticket.setTicketLineItemsList(ticketLineItems);
 
         Set<String> betsId = checkDuplicates(ticket);
@@ -53,7 +53,6 @@ public class TicketService {
 
             BetToTicketResponse[] responseArray = getBetsFromBetService(betsId);
 
-
             List<BetToTicketResponse> withoutNullResponseList = new ArrayList<>();
             assert responseArray != null;
             for (BetToTicketResponse betToTicketResponse : responseArray) {
@@ -62,28 +61,13 @@ public class TicketService {
                 }
             }
 
-            List<BetToTicketResponse> sortedResponseFromBetService =
-                    withoutNullResponseList.stream()
-                            .sorted(Comparator.comparing(BetToTicketResponse::get_id))
-                            .toList();
-            List<TicketLineItems> sortedTicketRequest =
-                    ticketLineItems.stream()
-                            .sorted(Comparator.comparing(TicketLineItems::getBetId))
-                            .toList();
-
-
-            for (int i = 0; i < withoutNullResponseList.size(); i++) {
-                if (!isValidBetRequest(sortedTicketRequest.get(i), sortedResponseFromBetService.get(i))) {
-                    throw new IllegalArgumentException("Bad bet in request.");
-                }
-            }
+            verifyResponseFromBetServiceToGivenTicket(withoutNullResponseList, ticketLineItems);
 
             double overallExchange = calculateOverallExchange(ticketLineItems);
             ticket.setOverall(overallExchange);
             ticket.setTotalStake(ticketRequest.getTotalStake());
             ticket.setTotalWin(overallExchange * ticketRequest.getTotalStake() * (1 - tax));
             ticket.setBillingStatus(BillingStatus.PENDING);
-
 
             if (withoutNullResponseList.size() == betsId.size()) {
                 walletReduction(ticketRequest);
@@ -102,6 +86,24 @@ public class TicketService {
         }
     }
 
+    private void verifyResponseFromBetServiceToGivenTicket(List<BetToTicketResponse> betToTicketResponseList,
+                                                           List<TicketLineItems> ticketLineItemsList) {
+        List<BetToTicketResponse> sortedResponseFromBetService =
+                betToTicketResponseList.stream()
+                        .sorted(Comparator.comparing(BetToTicketResponse::get_id))
+                        .toList();
+        List<TicketLineItems> sortedTicketRequest =
+                ticketLineItemsList.stream()
+                        .sorted(Comparator.comparing(TicketLineItems::getBetId))
+                        .toList();
+
+        for (int i = 0; i < betToTicketResponseList.size(); i++) {
+            if (!isValidBetRequest(sortedTicketRequest.get(i), sortedResponseFromBetService.get(i))) {
+                throw new IllegalArgumentException("Bad bet in request.");
+            }
+        }
+    }
+
     private double calculateOverallExchange(List<TicketLineItems> ticketLineItems) {
         double overallExchange = 1;
         for (TicketLineItems response : ticketLineItems) {
@@ -111,7 +113,8 @@ public class TicketService {
     }
 
     private void walletReduction(TicketRequest ticketRequest) {
-        WalletDecrease walletDecrease = new WalletDecrease(ticketRequest.getWalletId(), ticketRequest.getTotalStake());
+        WalletDecrease walletDecrease = new WalletDecrease(ticketRequest.getWalletId(),
+                ticketRequest.getTotalStake());
         webClientBuilder.build().post()
                 .uri("http://wallet-service/api/wallet",
                         uriBuilder ->
@@ -176,19 +179,21 @@ public class TicketService {
 
     @KafkaListener(topics = "betTopic")
     public void updateTickets(UpdateBetStatusInTicket status) {
-        List<Ticket> tickets = ticketRepository.findAllByTicketLineItemsList_BetIdAndBillingStatus(status.getId(), BillingStatus.PENDING);
-        for (Ticket ticket: tickets) {
+        List<Ticket> tickets = ticketRepository
+                .findAllByTicketLineItemsList_BetIdAndBillingStatus(status.getId(), BillingStatus.PENDING);
+
+        for (Ticket ticket : tickets) {
             boolean allBetsInTicketLineItemsResloved = true;
             List<TicketLineItems> ticketLineItemsList = ticket.getTicketLineItemsList();
-            for (TicketLineItems bets: ticketLineItemsList) {
+            for (TicketLineItems bets : ticketLineItemsList) {
                 if (bets.getBetId().equals(status.getId())) {
                     bets.setBetStatus(status.getBetStatus());
                 }
-                if (bets.getBetStatus().equals(BetStatus.PENDING)){
+                if (bets.getBetStatus().equals(BetStatus.PENDING)) {
                     allBetsInTicketLineItemsResloved = false;
                 }
             }
-            if (allBetsInTicketLineItemsResloved){
+            if (allBetsInTicketLineItemsResloved) {
                 ticket.setBillingStatus(BillingStatus.TO_PAY);
             }
             ticketRepository.save(ticket);
