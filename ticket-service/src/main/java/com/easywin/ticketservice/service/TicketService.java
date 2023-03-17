@@ -78,15 +78,10 @@ public class TicketService {
                 }
             }
 
-            Double overall = 1.00;
-            for (TicketLineItems response : ticketLineItems) {
-                overall *= response.getRate();
-            }
-
-
-            ticket.setOverall(overall);
+            double overallExchange = calculateOverallExchange(ticketLineItems);
+            ticket.setOverall(overallExchange);
             ticket.setTotalStake(ticketRequest.getTotalStake());
-            ticket.setTotalWin(overall * ticketRequest.getTotalStake() * (1 - tax));
+            ticket.setTotalWin(overallExchange * ticketRequest.getTotalStake() * (1 - tax));
             ticket.setBillingStatus(BillingStatus.PENDING);
 
 
@@ -105,6 +100,14 @@ public class TicketService {
         } finally {
             betServiceLookup.flush();
         }
+    }
+
+    private double calculateOverallExchange(List<TicketLineItems> ticketLineItems) {
+        double overallExchange = 1;
+        for (TicketLineItems response : ticketLineItems) {
+            overallExchange *= response.getRate();
+        }
+        return overallExchange;
     }
 
     private void walletReduction(TicketRequest ticketRequest) {
