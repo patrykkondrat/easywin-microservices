@@ -2,7 +2,10 @@ package com.easywin.ticketservice.service;
 
 import brave.Span;
 import brave.Tracer;
-import com.easywin.ticketservice.dto.*;
+import com.easywin.ticketservice.dto.BetToTicketResponse;
+import com.easywin.ticketservice.dto.TicketLineItemsDto;
+import com.easywin.ticketservice.dto.TicketRequest;
+import com.easywin.ticketservice.dto.WalletDecrease;
 import com.easywin.ticketservice.event.TicketPlaceEvent;
 import com.easywin.ticketservice.event.UpdateBetStatusInTicket;
 import com.easywin.ticketservice.model.BetStatus;
@@ -19,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,25 +37,14 @@ public class TicketService {
     @Transactional
     public String placeTicket(TicketRequest ticketRequest) {
         Ticket ticket = new Ticket();
-        Double tax = 0.12;
+        double tax = 0.12;
         ticket.setTicketNumber(UUID.randomUUID().toString());
 
-        List<TicketLineItems> ticketLineItems = ticketRequest.getTicketLineItemsDtoList()
-                .stream()
-                .map(this::mapToDto)
-                .toList();
+        List<TicketLineItems> ticketLineItems =  mapToDtoList(ticketRequest);
 
         ticket.setTicketLineItemsList(ticketLineItems);
 
-        List<String> betsId = ticket.getTicketLineItemsList().stream()
-                .map(TicketLineItems::getBetId)
-                .toList();
-
-        Set<String> idsWithoutDuplicates = new HashSet<>(betsId);
-
-        if (betsId.size() != idsWithoutDuplicates.size()) {
-            throw new IllegalArgumentException("Duplicates in ticket.");
-        }
+        Set<String> betsId = checkDuplicates(ticket);
 
         Span betServiceLookup = tracer.nextSpan().name("BetServiceLookup");
 
@@ -100,7 +93,7 @@ public class TicketService {
             ticket.setBillingStatus(BillingStatus.PENDING);
 
 
-            if (withoutNullResponseList.size() == idsWithoutDuplicates.size()) {
+            if (withoutNullResponseList.size() == betsId.size()) {
                 WalletDecrease walletDecrease = new WalletDecrease(ticketRequest.getWalletId(), ticketRequest.getTotalStake());
                 webClientBuilder.build().post()
                         .uri("http://wallet-service/api/wallet",
@@ -127,6 +120,17 @@ public class TicketService {
         }
     }
 
+    private Set<String> checkDuplicates(Ticket ticket) {
+        Set<String> betsId =
+                ticket.getTicketLineItemsList().stream()
+                        .map(TicketLineItems::getBetId).collect(Collectors.toSet());
+
+        if (betsId.size() == ticket.getTicketLineItemsList().size()) {
+            return betsId;
+        } else {
+            throw new IllegalArgumentException("Duplicates in ticket " + ticket.getTicketNumber());
+        }
+    }
 
     private boolean isValidBetRequest(TicketLineItems ticketLineItems, BetToTicketResponse response) {
         if (ticketLineItems.getBetId().equals(response.get_id())) {
@@ -139,6 +143,11 @@ public class TicketService {
             }
         }
         return false;
+    }
+
+    private List<TicketLineItems> mapToDtoList(TicketRequest ticketRequest) {
+        return ticketRequest.getTicketLineItemsDtoList().stream()
+                .map(this::mapToDto).toList();
     }
 
     private TicketLineItems mapToDto(TicketLineItemsDto ticketLineItemsDto) {
