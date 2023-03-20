@@ -39,7 +39,6 @@ public class BetService {
                 .build();
         log.info("Bet " + bet.toString() + " saved");
         betRepository.save(bet);
-
     }
 
     public void deleteBet(String _id) {
@@ -72,8 +71,6 @@ public class BetService {
                 .betStatus(bet.getBetStatus())
                 .build();
     }
-
-
 
     @Transactional(readOnly = true)
     public List<BetToTicketResponse> isBetInBets(List<String> _id) {
