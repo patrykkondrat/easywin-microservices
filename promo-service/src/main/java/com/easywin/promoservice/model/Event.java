@@ -26,6 +26,4 @@ public class Event {
     private String location;
     private String organizer;
     private String organizerEmail;
-
-
 }
