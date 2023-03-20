@@ -37,6 +37,5 @@ public class EmailSender {
             log.error("Error while sending email - {}", e.getMessage());
             throw new RuntimeException("Error while sending email", e);
         }
-
     }
 }
