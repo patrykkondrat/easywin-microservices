@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
@@ -66,13 +67,14 @@ public class EventService {
         eventRepository.save(event);
     }
 
+    @Transactional
     public void publishEvents(List<String> eventIds) {
         eventIds.forEach(id -> {
             Event event = eventRepository.findById(id).orElseThrow(EntityNotFoundException::new);
-            event.setStatus(EventStatus.PUBLISHED);
             kafkaTemplate.send("promoTopic", new PromoEvent(event.getId(), event.getName(), event.getDescription(),
                             event.getStartDate(), event.getEndDate(), event.getStartTime(),
                             event.getEndTime(), event.getLocation(), event.getOrganizer()));
+            event.setStatus(EventStatus.PUBLISHED);
             log.info("Published event - {}", event.getName());
             eventRepository.save(event);
         });
